@@ -1,0 +1,42 @@
+{
+  "project_info": {
+    "project_number": "195902502074",
+    "firebase_url": "https://guardian-angel-5da45.firebaseio.com",
+    "project_id": "guardian-angel-5da45",
+    "storage_bucket": "guardian-angel-5da45.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:195902502074:android:82fea65087e8419d",
+        "android_client_info": {
+          "package_name": "com.example.hudsonmcashan.guradianaangel"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "195902502074-q748r8jh4u7kudfa03tsqioblv5ei22s.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD5p7HbZmsKk1JDGSzqwNMdSeaT6t7IQWU"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
