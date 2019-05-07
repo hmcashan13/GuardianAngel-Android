@@ -115,24 +115,24 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
         }
 
         // Setup UART
-        if (Build.VERSION.SDK_INT > 21) {
-            bluetoothManager = getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
-            bluetoothAdapter = bluetoothManager.adapter
-            bleScanner = bluetoothAdapter.bluetoothLeScanner
-
-            isInit = true
-            Log.i(TAG_BLUETOOTH, "BleUART.init(): initialized")
-
-//            connectToDevice()
-        }
+//        if (Build.VERSION.SDK_INT > 21) {
+//            bluetoothManager = getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
+//            bluetoothAdapter = bluetoothManager.adapter
+//            bleScanner = bluetoothAdapter.bluetoothLeScanner
+//
+//            isInit = true
+//            Log.i(TAG_BLUETOOTH, "BleUART.init(): initialized")
+//
+////            connectToDevice()
+//        }
 
     }
 
     override fun onDestroy() {
         super.onDestroy()
         beaconManager?.unbind(this)
-        if (isScanning) stopScanning();
-        if (uartGatt.device.bondState >= BluetoothGatt.STATE_CONNECTED) disconnect();
+//        if (isScanning) stopScanning();
+//        if (uartGatt.device.bondState >= BluetoothGatt.STATE_CONNECTED) disconnect();
     }
 
 
