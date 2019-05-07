@@ -382,10 +382,10 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
     }
 
     fun setTimerToStopScan(scanInterval: Int) {
-        Timer().schedule(scanInterval) {
-            Log.i(TAG_BLUETOOTH, "BleUART.setTimerToStopScan(): timer triggered to stop scan")
-            stopScanning()
-        }
+//        Timer().schedule(scanInterval) {
+//            Log.i(TAG_BLUETOOTH, "BleUART.setTimerToStopScan(): timer triggered to stop scan")
+//            stopScanning()
+//        }
     }
 
     fun connectTo(deviceAddress: String) {
