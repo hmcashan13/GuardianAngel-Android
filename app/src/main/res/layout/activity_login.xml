@@ -3,8 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    tools:context=".Login">
+    android:layout_height="match_parent">
 
     <EditText
         android:id="@+id/email_editText_login"
@@ -97,5 +96,14 @@
         app:layout_constraintStart_toStartOf="@+id/email_editText_login"
         app:layout_constraintTop_toTopOf="parent"
         app:srcCompat="@mipmap/new_logo_foreground" />
+
+    <com.facebook.login.widget.LoginButton
+        android:id="@+id/facebook_login_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        app:layout_constraintEnd_toEndOf="@+id/forgot_password_textView"
+        app:layout_constraintStart_toStartOf="@+id/forgot_password_textView"
+        tools:layout_editor_absoluteY="452dp" />
 
 </android.support.constraint.ConstraintLayout>

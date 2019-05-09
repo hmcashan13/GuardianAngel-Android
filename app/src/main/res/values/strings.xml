@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">Guradian Angel</string>
+    <string name="facebook_app_id">815014198865670</string>
+    <string name="fb_login_protocol_scheme">fb815014198865670</string>
 </resources>
