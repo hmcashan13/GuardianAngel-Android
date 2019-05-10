@@ -23,14 +23,13 @@ import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.os.Build
 import android.widget.RemoteViews
+import com.google.firebase.auth.FirebaseUser
 import kotlin.collections.HashMap
 import kotlin.concurrent.schedule
 @TargetApi(21)
 class DeviceActivity : AppCompatActivity(), BeaconConsumer {
-    // Beacon properties
-    private val TAG_BEACON = "BeaconDeviceActivity"
-    lateinit var beaconManager: BeaconManager
-    lateinit var my_region: Region
+    // Authentication properties
+    private lateinit var auth: FirebaseAuth
 
     // Notification properties
     lateinit var notificationManager: NotificationManager
@@ -41,6 +40,11 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
     private val outOfRegionNotificationDescription = "Your too far away from your baby"
     private val inRegionNotificationDescription = "Entered region"
     private val tooHotNotificationDescription = "Your car is too hot"
+
+    // Beacon properties
+    private val TAG_BEACON = "BeaconDeviceActivity"
+    lateinit var beaconManager: BeaconManager
+    lateinit var my_region: Region
 
     // Bluetooth properties
     private val TAG_BLUETOOTH = "BluetoothDeviceActivity"
@@ -72,28 +76,42 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
     var isBabyInSeat: Boolean = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_connection)
+            super.onCreate(savedInstanceState)
+            setContentView(R.layout.activity_connection)
 
-        // Setup title
-        setTitle("Guardian Angel")
-        // Verify if user is logged in
-        verifyUserIsLoggedIn()
+            verifyUserIsLoggedIn()
+            setupSettingsButton()
+            setupLogoutButton()
+            setupNotificationManager()
+            setupBeacon()
+            //TODO: set UART up properly
+            //setupUART()
+    }
 
-        // Settings button setup
+    override fun onDestroy() {
+        super.onDestroy()
+        beaconManager?.unbind(this)
+//        if (isScanning) stopScanning();
+//        if (uartGatt.device.bondState >= BluetoothGatt.STATE_CONNECTED) disconnect();
+    }
+
+    private fun setupSettingsButton() {
         settings_button.setOnClickListener {
             launchSettings()
         }
+    }
 
-        // Logout button setup
+    private fun setupLogoutButton() {
         logout_button.setOnClickListener {
             logout()
         }
+    }
 
-        // Setup notification manager
+    private fun setupNotificationManager() {
         notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+    }
 
-        // Setup beacon
+    private fun setupBeacon() {
         beaconManager = BeaconManager.getInstanceForApplication(this)
         val uuid: UUID = UUID.fromString("fda50693-a4e2-4fb1-afcf-c6eb07647825")
         val id1: Identifier = Identifier.fromUuid(uuid)
@@ -113,29 +131,21 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
                 builder.show()
             }
         }
+    }
 
+    private fun setupUART() {
         // Setup UART
-//        if (Build.VERSION.SDK_INT > 21) {
-//            bluetoothManager = getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
-//            bluetoothAdapter = bluetoothManager.adapter
-//            bleScanner = bluetoothAdapter.bluetoothLeScanner
-//
-//            isInit = true
-//            Log.i(TAG_BLUETOOTH, "BleUART.init(): initialized")
-//
-////            connectToDevice()
-//        }
-
+        //        if (Build.VERSION.SDK_INT > 21) {
+        //            bluetoothManager = getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
+        //            bluetoothAdapter = bluetoothManager.adapter
+        //            bleScanner = bluetoothAdapter.bluetoothLeScanner
+        //
+        //            isInit = true
+        //            Log.i(TAG_BLUETOOTH, "BleUART.init(): initialized")
+        //
+        ////            connectToDevice()
+        //        }
     }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        beaconManager?.unbind(this)
-//        if (isScanning) stopScanning();
-//        if (uartGatt.device.bondState >= BluetoothGatt.STATE_CONNECTED) disconnect();
-    }
-
-
 
     // Notification
     private fun sendTemperatureNotification() {
@@ -256,10 +266,17 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
 
     // Authentication functions
     private fun verifyUserIsLoggedIn() {
-        val uid = FirebaseAuth.getInstance().uid
-        if (uid == null) {
+        auth = FirebaseAuth.getInstance()
+        val currentUser = auth.currentUser
+        if (currentUser == null) {
             logout()
+        } else {
+            updateUI(currentUser)
         }
+    }
+
+    private fun updateUI(user: FirebaseUser) {
+        setTitle(""+user.displayName)
     }
 
     private fun logout() {
