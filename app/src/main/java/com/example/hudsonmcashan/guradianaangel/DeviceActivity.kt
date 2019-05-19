@@ -3,8 +3,7 @@ package com.example.hudsonmcashan.guradianaangel
 import android.annotation.TargetApi
 import android.app.*
 import android.bluetooth.*
-import android.bluetooth.le.BluetoothLeScanner
-import android.bluetooth.le.ScanCallback
+import android.bluetooth.le.*
 import android.content.Intent
 import android.os.Bundle
 import android.os.RemoteException
@@ -22,10 +21,17 @@ import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.os.Build
 import android.widget.RemoteViews
+import android.widget.Toast
+import org.jetbrains.anko.toast
 import kotlin.collections.HashMap
 import kotlin.concurrent.schedule
+import kotlin.concurrent.timerTask
+
 @TargetApi(21)
 class DeviceActivity : AppCompatActivity(), BeaconConsumer {
+    // Tags
+    val TAG_BEACON = "BeaconDeviceActivity"
+    val TAG_BLUETOOTH = "BluetoothDeviceActivity"
 
     // Notification properties
     lateinit var notificationManager: NotificationManager
@@ -38,36 +44,24 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
     private val tooHotNotificationDescription = "Your car is too hot"
 
     // Beacon properties
-    private val TAG_BEACON = "BeaconDeviceActivity"
     lateinit var beaconManager: BeaconManager
     lateinit var my_region: Region
 
     // Bluetooth properties
-    private val TAG_BLUETOOTH = "BluetoothDeviceActivity"
-    lateinit var bluetoothManager: BluetoothManager
+    private lateinit var bluetoothManager: BluetoothManager
     lateinit var bluetoothAdapter: BluetoothAdapter
     lateinit var bleScanner: BluetoothLeScanner
     lateinit var scanCallback: ScanCallback
+    lateinit var bleGattCallback: BluetoothGattCallback
     lateinit var uartGatt: BluetoothGatt
-    var connectedDevice = ""
 
     var deviceMap: HashMap<String, BluetoothDevice> = HashMap()
+    val UART_UUID = UUID.fromString("8519BF04-6C36-4B4A-4182-A2764CE2E05A")
+    val UUID_SERVICE_UART = UUID.fromString("6E400001-B5A3-F393-E0A9-E50E24DCCA9E")
+    val UUID_CHARACT_TX   = UUID.fromString("6E400002-B5A3-F393-E0A9-E50E24DCCA9E")
+    val UUID_CHARACT_RX   = UUID.fromString("6E400003-B5A3-F393-E0A9-E50E24DCCA9E")
 
-    val UUID_SERVICE_UART = "6E400001-B5A3-F393-E0A9-E50E24DCCA9E";
-    val UUID_CHARACT_TX   = "6E400003-B5A3-F393-E0A9-E50E24DCCA9E";
-    val UUID_CHARACT_RX   = "6E400002-B5A3-F393-E0A9-E50E24DCCA9E";
-
-    val DEFAULT_SCAN_TIMEOUT = 5000
-
-    private var isInit           = false
-    private var isScanning       = false
-    private var isShowAllDevices = true
-
-    val methodNameDeviceDiscovered = "bleUARTDeviceDiscovered"
-    val methodNameScanningFinished = "bleUARTScanningFinished"
-    val methodNameConnected        = "bleUARTConnected"
-    val methodNameDisconnected     = "bleUARTDisconnected"
-    val methodNameMessageReceived  = "bleUARTMessageReceived"
+    val DEFAULT_SCAN_TIMEOUT = 5000L
 
     var isBabyInSeat: Boolean = false
 
@@ -79,14 +73,14 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
             setupNotificationManager()
             setupBeacon()
             //TODO: set UART up properly
-            //setupUART()
+            setupUART()
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        beaconManager?.unbind(this)
-//        if (isScanning) stopScanning();
-//        if (uartGatt.device.bondState >= BluetoothGatt.STATE_CONNECTED) disconnect();
+        beaconManager.unbind(this)
+//        if (isScanning) stopScanning()
+//        if (uartGatt.device.bondState >= BluetoothGatt.STATE_CONNECTED) disconnect()
     }
 
     private fun setupSettingsButton() {
@@ -106,8 +100,8 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
         val id2: Identifier = Identifier.fromInt(10011)
         val id3: Identifier = Identifier.fromInt(10011)
         my_region = Region("my_beacon_region", id1, id2, id3)
-        beaconManager?.getBeaconParsers()?.add(BeaconParser().setBeaconLayout("m:2-3=0215,i:4-19,i:20-21,i:22-23,p:24-24"))
-        beaconManager?.bind(this)
+        beaconManager.getBeaconParsers().add(BeaconParser().setBeaconLayout("m:2-3=0215,i:4-19,i:20-21,i:22-23,p:24-24"))
+        beaconManager.bind(this)
         //  Setup location permissions
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if (this.checkSelfPermission(android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
@@ -123,129 +117,55 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
 
     private fun setupUART() {
         // Setup UART
-        //        if (Build.VERSION.SDK_INT > 21) {
-        //            bluetoothManager = getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
-        //            bluetoothAdapter = bluetoothManager.adapter
-        //            bleScanner = bluetoothAdapter.bluetoothLeScanner
-        //
-        //            isInit = true
-        //            Log.i(TAG_BLUETOOTH, "BleUART.init(): initialized")
-        //
-        ////            connectToDevice()
-        //        }
+        if (Build.VERSION.SDK_INT > 21) {
+            bluetoothManager = getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
+            bluetoothAdapter = bluetoothManager.adapter
+            setupCallBacks()
+            startScan()
+
+            Log.i(TAG_BLUETOOTH, "UART setup")
+            //connectTo(UART_UUID)
+        }
     }
 
     // Notification
-    private fun sendTemperatureNotification() {
+    private fun sendNotification(description: String) {
         val intent = Intent(this, DeviceActivity::class.java)
         val pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT)
 
         val contentView = RemoteViews(packageName, R.layout.notification_layout)
         contentView.setTextViewText(R.id.notification_title, title)
-        contentView.setTextViewText(R.id.notification_content, tooHotNotificationDescription)
+        contentView.setTextViewText(R.id.notification_content, description)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            notificationChannel = NotificationChannel(channelId, tooHotNotificationDescription, NotificationManager.IMPORTANCE_HIGH)
+            notificationChannel = NotificationChannel(channelId, description, NotificationManager.IMPORTANCE_HIGH)
             notificationChannel.enableLights(true)
             notificationChannel.lightColor = Color.MAGENTA
             notificationChannel.enableVibration(true)
             notificationManager.createNotificationChannel(notificationChannel)
 
             builder = Notification.Builder(this, channelId)
-                    .setContent(contentView)
                     .setSmallIcon(R.drawable.ic_launcher_round)
-                    //.setLargeIcon(BitmapFactory.decodeResource(this.resources, R.drawable.angel_wings_app_icon))
                     .setContentIntent(pendingIntent)
                     .setChannelId(channelId)
                     .setAutoCancel(true)
         } else {
             builder = Notification.Builder(this)
-                    .setContent(contentView)
                     .setSmallIcon(R.drawable.ic_launcher_round)
                     .setLargeIcon(BitmapFactory.decodeResource(this.resources, R.drawable.angel_wings_app_icon))
                     .setContentIntent(pendingIntent)
         }
         if (Build.VERSION.SDK_INT < 16) {
-            notificationManager.notify(1, builder.getNotification())
+            notificationManager.notify(1, builder.notification)
         } else {
             notificationManager.notify(1, builder.build())
-        }
-    }
-
-    private fun sendLeftRegionNotification() {
-        val intent = Intent(this, DeviceActivity::class.java)
-        val pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT)
-
-        val contentView = RemoteViews(packageName, R.layout.notification_layout)
-        contentView.setTextViewText(R.id.notification_title, title)
-        contentView.setTextViewText(R.id.notification_content, outOfRegionNotificationDescription)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            notificationChannel = NotificationChannel(channelId, outOfRegionNotificationDescription, NotificationManager.IMPORTANCE_HIGH)
-            notificationChannel.enableLights(true)
-            notificationChannel.lightColor = Color.MAGENTA
-            notificationChannel.enableVibration(true)
-            notificationManager.createNotificationChannel(notificationChannel)
-
-            builder = Notification.Builder(this, channelId)
-                    .setContent(contentView)
-                    .setSmallIcon(R.drawable.ic_launcher_round)
-                    .setLargeIcon(BitmapFactory.decodeResource(this.resources, R.drawable.angel_wings_app_icon))
-                    .setContentIntent(pendingIntent)
-                    .setChannelId(channelId)
-        } else {
-            builder = Notification.Builder(this)
-                    .setContent(contentView)
-                    .setSmallIcon(R.drawable.ic_launcher_round)
-                    .setLargeIcon(BitmapFactory.decodeResource(this.resources, R.drawable.angel_wings_app_icon))
-                    .setContentIntent(pendingIntent)
-        }
-        if (Build.VERSION.SDK_INT < 16) {
-            notificationManager.notify(2, builder.getNotification())
-        } else {
-            notificationManager.notify(2, builder.build())
-        }
-    }
-
-    private fun sendEnteredRegionNotification() {
-        val intent = Intent(this, DeviceActivity::class.java)
-        val pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT)
-
-        val contentView = RemoteViews(packageName, R.layout.notification_layout)
-        contentView.setTextViewText(R.id.notification_title, title)
-        contentView.setTextViewText(R.id.notification_content, inRegionNotificationDescription)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            notificationChannel = NotificationChannel(channelId, inRegionNotificationDescription, NotificationManager.IMPORTANCE_HIGH)
-            notificationChannel.enableLights(true)
-            notificationChannel.lightColor = Color.MAGENTA
-            notificationChannel.enableVibration(true)
-            notificationChannel.vibrationPattern = longArrayOf(100, 200, 300, 400, 500, 400, 300, 200, 400)
-            notificationManager.createNotificationChannel(notificationChannel)
-
-            builder = Notification.Builder(this, channelId)
-                    .setContent(contentView)
-                    .setSmallIcon(R.drawable.ic_launcher_round)
-                    .setLargeIcon(BitmapFactory.decodeResource(this.resources, R.drawable.angel_wings_app_icon))
-                    .setContentIntent(pendingIntent)
-                    .setChannelId(channelId)
-                    .setNumber(5)
-        } else {
-            builder = Notification.Builder(this)
-                    .setContent(contentView)
-                    .setSmallIcon(R.drawable.ic_launcher_round)
-                    .setLargeIcon(BitmapFactory.decodeResource(this.resources, R.drawable.angel_wings_app_icon))
-                    .setContentIntent(pendingIntent)
-        }
-        if (Build.VERSION.SDK_INT < 16) {
-            notificationManager.notify(3, builder.getNotification())
-        } else {
-            notificationManager.notify(3, builder.build())
         }
     }
 
     // Settings
     private fun launchSettings() {
         // launch the settings activity
-        val settings_button = findViewById<Button>(R.id.settings_button)
-        settings_button.setOnClickListener {
+        val settingsButton = findViewById<Button>(R.id.settings_button)
+        settingsButton.setOnClickListener {
             val intent = Intent(this, SettingsActivity::class.java)
             startActivity(intent)
         }
@@ -260,40 +180,37 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
             baby_in_seat_label.text = "No"
         }
     }
-    var x = 0
+    //var x = 0
 
     // Beacon function
     override fun onBeaconServiceConnect() {
-        beaconManager?.removeAllMonitorNotifiers()
-        beaconManager?.removeAllRangeNotifiers()
-        beaconManager?.addRangeNotifier { beacons, region ->
+        beaconManager.removeAllMonitorNotifiers()
+        beaconManager.removeAllRangeNotifiers()
+        beaconManager.addRangeNotifier { beacons, _ ->
             if (beacons.isNotEmpty()) {
                 val beacon = beacons.first()
-                val distance = beacon.distance
+                val distance = beacon.distance.toInt()
                 Log.i(TAG_BEACON, "beacon distance: $distance")
 
-                if (distance < 0) {
-                    beacon_label.text = "Not Connected"
-                } else if (distance < 5) {
-                    beacon_label.text = "Very Close"
-                } else if (distance < 15) {
-                    beacon_label.text = "Near"
-                } else {
-                    beacon_label.text = "Far"
+                when(distance){
+                    in Int.MIN_VALUE..0 -> beacon_label.text = "Not Connected"
+                    in 0..5 -> beacon_label.text = "Very Close"
+                    in 5..10 -> beacon_label.text = "Near"
+                    else -> beacon_label.text = "Far"
                 }
             }
         }
 
         try {
-            beaconManager?.startRangingBeaconsInRegion(my_region)
+            beaconManager.startRangingBeaconsInRegion(my_region)
         } catch (e: RemoteException) {
             Log.i(TAG_BEACON, "Ranging failed!!!")
             e.printStackTrace()
         }
-        beaconManager?.addMonitorNotifier(object : MonitorNotifier {
+        beaconManager.addMonitorNotifier(object : MonitorNotifier {
             override fun didEnterRegion(region: Region) {
                 if (region.equals(my_region)){
-                    x = 1
+                    //x = 1
                     Log.i(TAG_BEACON, "Hola")
                     //sendEnteredRegionNotification()
 
@@ -302,15 +219,15 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
 
             override fun didExitRegion(region: Region) {
                 if (region.equals(my_region)) {
-                    x = 0
+                   // x = 0
                     Log.i(TAG_BEACON, "Adios")
                     beacon_label.text = "Not Connected"
-                    Timer().schedule(15000) {
+                    //Timer().schedule(15000) {
                         Log.i(TAG_BEACON, "Timer complete")
-                        if (x == 0) {
-                            sendLeftRegionNotification()
-                        }
-                    }
+                        //if (x == 0) {
+                            sendNotification(outOfRegionNotificationDescription)
+                        //}
+                    //}
                 }
             }
 
@@ -320,77 +237,71 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
         })
 
         try {
-            beaconManager?.startMonitoringBeaconsInRegion(my_region)
+            beaconManager.startMonitoringBeaconsInRegion(my_region)
         } catch (e: RemoteException) {
             Log.i(TAG_BEACON, "Monitoring failed!!!")
             e.printStackTrace()
         }
 
     }
-    val uuidString: String = "CC519F02-80F0-88F7-2B69-6FCFF084DF7E"
-    val uuid:UUID = UUID.fromString(uuidString)
 
-    // BLE extension
-    fun stopScanning() {
-
-    }
-
-    fun disconnect() {
-        if (uartGatt.device.bondState >= BluetoothGatt.STATE_CONNECTING) {
-            Log.i(TAG_BLUETOOTH, "BleUARTGatt.disconnect(): disconnecting")
-            uartGatt.disconnect()
+    // UART functions
+    private fun startScan() {
+        if (bluetoothAdapter.isEnabled) {
+            bleScanner = bluetoothAdapter.bluetoothLeScanner
+            val scanFilter = ScanFilter.Builder().build()
+            val settings = ScanSettings.Builder().setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY).build()
+            bleScanner.startScan(Arrays.asList(scanFilter), settings, scanCallback)
         } else {
-            Log.i(TAG_BLUETOOTH, "BleUARTGatt.disconnect(): already disconnected")
+            toast("Bluetooth is not enabled")
+            Log.i(TAG_BLUETOOTH, "bluetooth is not available")
         }
     }
 
-    fun startScanning() {
-        startScanning(DEFAULT_SCAN_TIMEOUT);
-    }
+    private fun setupCallBacks() {
+        scanCallback = object: ScanCallback() {
+            override fun onScanResult(callbackType: Int, result: ScanResult) {
 
-    fun startScanning(scanInterval: Int) {
-        if (!isInit) {
-            Log.i(TAG_BLUETOOTH, "BleUART.scan(): BleUART isn't initialized.")
-            return;
+                Log.i(TAG_BLUETOOTH, "Scanned devices: " + result.device.name)
+                if("NORDIC_USART".equals(result.device.name)) {
+                    Toast.makeText(this@DeviceActivity,"hello",Toast.LENGTH_SHORT).show()
+                    bleScanner.stopScan(scanCallback)
+                    uartGatt = result.device.connectGatt(
+                            applicationContext, false, bleGattCallback)
+                }
+                super.onScanResult(callbackType, result)
+            }
         }
 
-        deviceMap.clear();
+        bleGattCallback = object: BluetoothGattCallback() {
+            override fun onConnectionStateChange(gatt: BluetoothGatt?, status: Int, newState: Int) {
+                gatt?.discoverServices()
+                super.onConnectionStateChange(gatt, status, newState)
+            }
 
-        bleScanner.startScan(scanCallback);
+            override fun onServicesDiscovered(gatt: BluetoothGatt?, status: Int) {
+                val uartService = gatt?.getService(UUID_SERVICE_UART)
+                if (uartService != null) {
+                    val uartCharacteristic = uartService.getCharacteristic(UUID_CHARACT_TX)
+                    Log.i(TAG_BLUETOOTH, "TX Characterstic found")
+                    gatt.readCharacteristic(uartCharacteristic)
+                } else {
+                    Log.i(TAG_BLUETOOTH, "uart service was not found")
+                }
+                super.onServicesDiscovered(gatt, status)
+            }
 
-        setTimerToStopScan(scanInterval);
-        isScanning = true;
-        Log.i(TAG_BLUETOOTH, "BleUART.startScan(): scanning started.")
-    }
+            override fun onCharacteristicRead(gatt: BluetoothGatt?, characteristic: BluetoothGattCharacteristic?, status: Int) {
+                if (characteristic != null) {
+                    val value: String = characteristic.getStringValue(0)
+                    Log.i(TAG_BLUETOOTH, "uart string: $value")
+                } else {
+                    Log.i(TAG_BLUETOOTH, "uart service was not found")
+                }
 
-    fun setTimerToStopScan(scanInterval: Int) {
-//        Timer().schedule(scanInterval) {
-//            Log.i(TAG_BLUETOOTH, "BleUART.setTimerToStopScan(): timer triggered to stop scan")
-//            stopScanning()
-//        }
-    }
 
-    fun connectTo(deviceAddress: String) {
-        if (uartGatt.device.bondState == BluetoothGatt.STATE_CONNECTED) {
-            Log.i(TAG_BLUETOOTH, "BleUART.connectTo(): WARNING gatt is already connected")
-            return;
-        } else if (uartGatt.device.bondState >= BluetoothGatt.STATE_CONNECTING) {
-            Log.i(TAG_BLUETOOTH, "BleUART.connectTo(): WARNING gatt is already connecting")
-            return;
+                super.onCharacteristicRead(gatt, characteristic, status)
+            }
         }
-
-        val device = deviceMap.get(deviceAddress)
-        if (device == null) {
-            Log.i(TAG_BLUETOOTH, "BleUART.connectTo(): device address <" + deviceAddress + "> not in map; starting scan")
-            startScanning(DEFAULT_SCAN_TIMEOUT)
-            connectedDevice = deviceAddress
-            return;
-        }
-
-        Log.i(TAG_BLUETOOTH, "BleUART.connectTo(): connecting to <" + deviceAddress + ">")
-//        uartGatt.init(device)
-        return;
     }
-
-
 }
