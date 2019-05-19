@@ -51,7 +51,7 @@
                                             <option name="values">
                                               <map>
                                                 <entry key="color" value="000000" />
-                                                <entry key="scalingPercent" value="99" />
+                                                <entry key="scalingPercent" value="65" />
                                               </map>
                                             </option>
                                           </PersistentState>
@@ -61,8 +61,10 @@
                                   </option>
                                   <option name="values">
                                     <map>
-                                      <entry key="foregroundImage" value="$USER_HOME$/Desktop/GUARDIAN ANGEL - LOGO 2 - white.png" />
-                                      <entry key="outputName" value="new_logo" />
+                                      <entry key="backgroundAssetType" value="COLOR" />
+                                      <entry key="backgroundColor" value="ffffff" />
+                                      <entry key="foregroundImage" value="$PROJECT_DIR$/../../../Business/Guardian Angel/Media/Logo/GUARDIAN ANGEL - ICON.png" />
+                                      <entry key="outputName" value="new_ic_launcher" />
                                     </map>
                                   </option>
                                 </PersistentState>

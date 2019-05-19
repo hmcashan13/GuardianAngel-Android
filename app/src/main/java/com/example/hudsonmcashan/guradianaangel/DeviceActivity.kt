@@ -11,7 +11,6 @@ import android.os.RemoteException
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
 import android.widget.Button
-import com.google.firebase.auth.FirebaseAuth
 import kotlinx.android.synthetic.main.activity_connection.*
 import java.util.*
 import org.altbeacon.beacon.*
@@ -23,13 +22,10 @@ import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.os.Build
 import android.widget.RemoteViews
-import com.google.firebase.auth.FirebaseUser
 import kotlin.collections.HashMap
 import kotlin.concurrent.schedule
 @TargetApi(21)
 class DeviceActivity : AppCompatActivity(), BeaconConsumer {
-    // Authentication properties
-    private lateinit var auth: FirebaseAuth
 
     // Notification properties
     lateinit var notificationManager: NotificationManager
@@ -63,9 +59,9 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
 
     val DEFAULT_SCAN_TIMEOUT = 5000
 
-    protected var isInit           = false
-    protected var isScanning       = false
-    protected var isShowAllDevices = true
+    private var isInit           = false
+    private var isScanning       = false
+    private var isShowAllDevices = true
 
     val methodNameDeviceDiscovered = "bleUARTDeviceDiscovered"
     val methodNameScanningFinished = "bleUARTScanningFinished"
@@ -79,9 +75,7 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
             super.onCreate(savedInstanceState)
             setContentView(R.layout.activity_connection)
 
-            verifyUserIsLoggedIn()
             setupSettingsButton()
-            setupLogoutButton()
             setupNotificationManager()
             setupBeacon()
             //TODO: set UART up properly
@@ -98,12 +92,6 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
     private fun setupSettingsButton() {
         settings_button.setOnClickListener {
             launchSettings()
-        }
-    }
-
-    private fun setupLogoutButton() {
-        logout_button.setOnClickListener {
-            logout()
         }
     }
 
@@ -262,29 +250,6 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
             startActivity(intent)
         }
 
-    }
-
-    // Authentication functions
-    private fun verifyUserIsLoggedIn() {
-        auth = FirebaseAuth.getInstance()
-        val currentUser = auth.currentUser
-        if (currentUser == null) {
-            logout()
-        } else {
-            updateUI(currentUser)
-        }
-    }
-
-    private fun updateUI(user: FirebaseUser) {
-        setTitle(""+user.displayName)
-    }
-
-    private fun logout() {
-        Log.d("ConnectionActivity", "Logging out")
-        FirebaseAuth.getInstance().signOut()
-        val intent = Intent(this, LoginActivity::class.java)
-        intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TASK.or(Intent.FLAG_ACTIVITY_NEW_TASK)
-        startActivity(intent)
     }
 
     private fun isBabyInSeat() {

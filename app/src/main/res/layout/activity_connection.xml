@@ -49,25 +49,12 @@
         android:text="  Baby in seat?"
         android:textAppearance="@style/TextAppearance.AppCompat.Caption"
         android:textColor="@android:color/holo_purple"
-        android:textColorLink="@color/common_google_signin_btn_text_dark_default"
+        android:textColorLink="@color/colorPrimary"
         android:textSize="18sp"
         app:layout_constraintEnd_toEndOf="@+id/beacon_text"
         app:layout_constraintStart_toStartOf="@+id/beacon_text"
         app:layout_constraintTop_toBottomOf="@+id/beacon_text"
         tools:text="  Baby in seat?" />
-
-    <Button
-        android:id="@+id/logout_button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:layout_marginLeft="8dp"
-        android:layout_marginTop="8dp"
-        android:background="@drawable/rounded_button"
-        android:text="Logout"
-        android:textColor="@android:color/white"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
 
     <Button
         android:id="@+id/settings_button"
@@ -86,14 +73,11 @@
         android:id="@+id/connection_logo"
         android:layout_width="192dp"
         android:layout_height="115dp"
-        android:layout_marginStart="8dp"
-        android:layout_marginLeft="8dp"
         android:layout_marginEnd="8dp"
         android:layout_marginRight="8dp"
         android:adjustViewBounds="true"
         android:scaleType="fitCenter"
         app:layout_constraintEnd_toStartOf="@+id/settings_button"
-        app:layout_constraintStart_toEndOf="@+id/logout_button"
         app:layout_constraintTop_toTopOf="parent"
         app:srcCompat="@mipmap/new_logo_foreground" />
 
