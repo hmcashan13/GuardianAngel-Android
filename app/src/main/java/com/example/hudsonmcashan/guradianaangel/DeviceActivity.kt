@@ -52,14 +52,13 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
     lateinit var bluetoothAdapter: BluetoothAdapter
     lateinit var bleScanner: BluetoothLeScanner
     lateinit var scanCallback: ScanCallback
+    lateinit var bleScanCallback: BluetoothAdapter.LeScanCallback
     lateinit var bleGattCallback: BluetoothGattCallback
     lateinit var uartGatt: BluetoothGatt
 
-    var deviceMap: HashMap<String, BluetoothDevice> = HashMap()
     val UART_UUID = UUID.fromString("8519BF04-6C36-4B4A-4182-A2764CE2E05A")
     val UUID_SERVICE_UART = UUID.fromString("6E400001-B5A3-F393-E0A9-E50E24DCCA9E")
     val UUID_CHARACT_TX   = UUID.fromString("6E400002-B5A3-F393-E0A9-E50E24DCCA9E")
-    val UUID_CHARACT_RX   = UUID.fromString("6E400003-B5A3-F393-E0A9-E50E24DCCA9E")
 
     val DEFAULT_SCAN_TIMEOUT = 5000L
 
@@ -209,26 +208,13 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
         }
         beaconManager.addMonitorNotifier(object : MonitorNotifier {
             override fun didEnterRegion(region: Region) {
-                if (region.equals(my_region)){
-                    //x = 1
-                    Log.i(TAG_BEACON, "Hola")
-                    //sendEnteredRegionNotification()
-
-                }
+                Log.i(TAG_BEACON, "Hola")
             }
 
             override fun didExitRegion(region: Region) {
-                if (region.equals(my_region)) {
-                   // x = 0
-                    Log.i(TAG_BEACON, "Adios")
-                    beacon_label.text = "Not Connected"
-                    //Timer().schedule(15000) {
-                        Log.i(TAG_BEACON, "Timer complete")
-                        //if (x == 0) {
-                            sendNotification(outOfRegionNotificationDescription)
-                        //}
-                    //}
-                }
+                Log.i(TAG_BEACON, "Adios")
+                beacon_label.text = "Not Connected"
+                //sendNotification(outOfRegionNotificationDescription)
             }
 
             override fun didDetermineStateForRegion(state: Int, region: Region) {
@@ -257,6 +243,13 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
             Log.i(TAG_BLUETOOTH, "bluetooth is not available")
         }
     }
+    private fun stopScan() {
+        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.KITKAT) {
+            bluetoothAdapter.bluetoothLeScanner.stopScan(scanCallback)
+        } else {
+            bluetoothAdapter.stopLeScan(bleScanCallback)
+        }
+    }
 
     private fun setupCallBacks() {
         scanCallback = object: ScanCallback() {
@@ -264,7 +257,6 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
 
                 Log.i(TAG_BLUETOOTH, "Scanned devices: " + result.device.name)
                 if("NORDIC_USART".equals(result.device.name)) {
-                    Toast.makeText(this@DeviceActivity,"hello",Toast.LENGTH_SHORT).show()
                     bleScanner.stopScan(scanCallback)
                     uartGatt = result.device.connectGatt(
                             applicationContext, false, bleGattCallback)
@@ -285,6 +277,7 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
                     val uartCharacteristic = uartService.getCharacteristic(UUID_CHARACT_TX)
                     Log.i(TAG_BLUETOOTH, "TX Characterstic found")
                     gatt.readCharacteristic(uartCharacteristic)
+
                 } else {
                     Log.i(TAG_BLUETOOTH, "uart service was not found")
                 }
