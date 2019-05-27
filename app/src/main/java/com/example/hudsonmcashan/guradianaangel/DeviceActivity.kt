@@ -354,19 +354,15 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
             val action = intent.action
             if (BluetoothLeService.ACTION_GATT_CONNECTED == action) {
                 mConnected = true
-                Log.d(TAG_BLUETOOTH, "Connected receiver")
                 //updateConnectionState(R.string.connected)
             } else if (BluetoothLeService.ACTION_GATT_DISCONNECTED == action) {
                 mConnected = false
-                Log.d(TAG_BLUETOOTH, "Disconnected receiver")
                 //updateConnectionState(R.string.disconnected)
                 //clearUI()
             } else if (BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED == action) {
                 // Show all the supported services and characteristics on the user interface.
-                Log.d(TAG_BLUETOOTH, "Discovered receiver")
                 displayGattServices(mBluetoothLeService!!.supportedGattServices)
             } else if (BluetoothLeService.ACTION_DATA_AVAILABLE == action) {
-                Log.d(TAG_BLUETOOTH, "Data available receiver")
                 displayData(intent.getStringExtra(BluetoothLeService.EXTRA_DATA))
             }
         }
@@ -375,8 +371,16 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
 
     private fun displayData(data: String?) {
         if (data != null) {
-            //mDataField!!.text = data
-            Log.i(TAG_BLUETOOTH, "data from uart: $data")
+            val dataArray = data.split(" ")
+            val rawTemp1 = dataArray[0]
+            val regex1 = """(T=)""".toRegex()
+            val rawTemp2 = regex1.replace(rawTemp1, "")
+            val regex2 = """(,)""".toRegex()
+            val celsiusTemp = regex2.replace(rawTemp2,".")
+            val farenheitTemp = (celsiusTemp.toDouble() * 9/5 + 32).toString()
+            val farenheitTempWithDegree = "$farenheitTemp°F"
+            temp_label!!.text = farenheitTempWithDegree
+            Log.i(TAG_BLUETOOTH, "temp: $farenheitTemp")
         }
     }
 

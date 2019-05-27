@@ -63,10 +63,10 @@ class BluetoothLeService : Service() {
 
         override fun onCharacteristicChanged(gatt: BluetoothGatt?, characteristic: BluetoothGattCharacteristic?) {
             super.onCharacteristicChanged(gatt, characteristic)
-            val data = characteristic?.value
-            if (data != null) {
-                val output = String(data, Charsets.UTF_8)
-                Log.i(TAG_BLUETOOTH, "data: ${output}")
+            val value = characteristic?.value
+            if (value != null) {
+                val data = String(value, Charsets.UTF_8)
+                broadcastUpdate(ACTION_DATA_AVAILABLE, data)
             }
         }
 
@@ -77,40 +77,10 @@ class BluetoothLeService : Service() {
         sendBroadcast(intent)
     }
 
-    private fun broadcastUpdate(action: String, characteristic: BluetoothGattCharacteristic) {
+    private fun broadcastUpdate(action: String, data: String) {
         val intent = Intent(action)
 
-        // This is special handling for the Heart Rate Measurement profile. Data
-        // parsing is carried out as per profile specifications.
-        when (characteristic.uuid) {
-            UUID_CHARACT_RX -> {
-                val flag = characteristic.properties
-                val format = when (flag and 0x01) {
-                    0x01 -> {
-                        Log.d(TAG_BLUETOOTH, "data format UINT16.")
-                        BluetoothGattCharacteristic.FORMAT_UINT16
-                    }
-                    else -> {
-                        Log.d(TAG_BLUETOOTH, "data format UINT8.")
-                        BluetoothGattCharacteristic.FORMAT_UINT8
-                    }
-                }
-                val heartRate = characteristic.getIntValue(format, 1)
-                Log.d(TAG_BLUETOOTH, String.format("Received data: %d", heartRate))
-            }
-            else -> {
-                // For all other profiles, writes the data formatted in HEX.
-                val data: ByteArray? = characteristic.value
-                if (data?.isNotEmpty() == true) {
-                    val hexString: String = data.joinToString(separator = " ") {
-                        String.format("%02X", it)
-                    }
-
-                    intent.putExtra(EXTRA_DATA, "$data\n$hexString")
-                }
-            }
-
-        }
+        intent.putExtra(EXTRA_DATA, "$data")
         sendBroadcast(intent)
     }
 
