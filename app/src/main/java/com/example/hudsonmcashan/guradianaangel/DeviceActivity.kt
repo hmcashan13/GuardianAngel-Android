@@ -30,6 +30,7 @@ import android.os.IBinder
 import android.widget.ExpandableListView
 import java.io.IOException
 import java.io.InputStream
+import kotlin.math.roundToInt
 
 // Tags
 val TAG_BEACON = "BeaconDeviceActivity"
@@ -52,23 +53,13 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
     lateinit var my_region: Region
 
     // Bluetooth properties
-    lateinit var bluetoothDevice: BluetoothDevice
-    lateinit var bluetoothManager: BluetoothManager
     lateinit var bluetoothAdapter: BluetoothAdapter
     lateinit var bleScanner: BluetoothLeScanner
     lateinit var bleScanCallback: BluetoothAdapter.LeScanCallback
-    private val  bluetoothServce = BluetoothLeService()
-
-    private var mDeviceAddress: String = "C8:84:47:1E:73:4E"
+    private var mDeviceAddress: String? = null
     private var mBluetoothLeService: BluetoothLeService? = null
-    private var mGattCharacteristics: ArrayList<ArrayList<BluetoothGattCharacteristic>>? = ArrayList()
     private var mConnected = false
-    private var mNotifyCharacteristic: BluetoothGattCharacteristic? = null
-
     val ENABLE_BT_REQUEST_CODE = 1
-
-    var connectionState = STATE_DISCONNECTED
-
     var isBabyInSeat: Boolean = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -154,7 +145,7 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
     }
 
     private fun setupUART() {
-        bluetoothManager = getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
+        val bluetoothManager = getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
         bluetoothAdapter = bluetoothManager.adapter
         if (bluetoothAdapter == null) {
             // Bluetooth is not supported
@@ -240,13 +231,9 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
 
     }
 
-    private fun isBabyInSeat() {
-        isBabyInSeat = !isBabyInSeat
-        if (isBabyInSeat) {
-            baby_in_seat_label.text = "Yes"
-        } else {
-            baby_in_seat_label.text = "No"
-        }
+    private fun isBabyInSeat(isInSeat: Boolean) {
+        isBabyInSeat = isInSeat
+        baby_in_seat_label.text = if (isBabyInSeat) "Yes" else "No"
     }
     //var x = 0
 
@@ -261,7 +248,7 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
                 Log.i(TAG_BEACON, "beacon distance: $distance")
 
                 when(distance){
-                    in Int.MIN_VALUE..0 -> beacon_label.text = "Not Connected"
+                    in Int.MIN_VALUE until 0 -> beacon_label.text = "Not Connected"
                     in 0..5 -> beacon_label.text = "Very Close"
                     in 5..10 -> beacon_label.text = "Near"
                     else -> beacon_label.text = "Far"
@@ -300,15 +287,6 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
 
     }
 
-    // UART functions
-    private fun checkBondedDevices() {
-        val pairedDevices = bluetoothAdapter.bondedDevices
-        if (pairedDevices.size > 0) {
-            for (device in pairedDevices) {
-                Log.i(TAG_BLUETOOTH, "paired device name: $device.name address: ${device.address}")
-            }
-        }
-    }
     private fun startScan() {
         if (bluetoothAdapter.isEnabled) {
             bleScanner = bluetoothAdapter.bluetoothLeScanner
@@ -346,7 +324,6 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
     // Handles various events fired by the Service.
     // ACTION_GATT_CONNECTED: connected to a GATT server.
     // ACTION_GATT_DISCONNECTED: disconnected from a GATT server.
-    // ACTION_GATT_SERVICES_DISCOVERED: discovered GATT services.
     // ACTION_DATA_AVAILABLE: received data from the device.  This can be a result of read
     //                        or notification operations.
     private val mGattUpdateReceiver = object : BroadcastReceiver() {
@@ -359,84 +336,47 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
                 mConnected = false
                 //updateConnectionState(R.string.disconnected)
                 //clearUI()
-            } else if (BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED == action) {
-                // Show all the supported services and characteristics on the user interface.
-                displayGattServices(mBluetoothLeService!!.supportedGattServices)
             } else if (BluetoothLeService.ACTION_DATA_AVAILABLE == action) {
                 displayData(intent.getStringExtra(BluetoothLeService.EXTRA_DATA))
             }
         }
     }
 
-
     private fun displayData(data: String?) {
         if (data != null) {
             val dataArray = data.split(" ")
-            val rawTemp1 = dataArray[0]
-            val regex1 = """(T=)""".toRegex()
-            val rawTemp2 = regex1.replace(rawTemp1, "")
-            val regex2 = """(,)""".toRegex()
-            val celsiusTemp = regex2.replace(rawTemp2,".")
-            val farenheitTemp = (celsiusTemp.toDouble() * 9/5 + 32).toString()
+            val rawTemp = dataArray[0]
+            val rawWeight = dataArray[1]
+            val celsiusTemp = parseTemp(rawTemp)
+            val weight = parseWeight(rawWeight).toInt()
+            val farenheitTemp = (celsiusTemp.toDouble() * 9/5 + 32).roundToInt().toString()
             val farenheitTempWithDegree = "$farenheitTemp°F"
             temp_label!!.text = farenheitTempWithDegree
+            if (weight < 3000) {
+                isBabyInSeat(true)
+            }
             Log.i(TAG_BLUETOOTH, "temp: $farenheitTemp")
+            Log.i(TAG_BLUETOOTH, "weight: $weight")
         }
     }
 
-    // If a given GATT characteristic is selected, check for supported features.  This sample
-    // demonstrates 'Read' and 'Notify' features.  See
-    // http://d.android.com/reference/android/bluetooth/BluetoothGatt.html for the complete
-    // list of supported characteristic features.
-    private val servicesListClickListner = ExpandableListView.OnChildClickListener { parent, v, groupPosition, childPosition, id ->
-        if (mGattCharacteristics != null) {
-            val characteristic = mGattCharacteristics!![groupPosition][childPosition]
-            val charaProp = characteristic.properties
-            if (charaProp or BluetoothGattCharacteristic.PROPERTY_READ > 0) {
-                // If there is an active notification on a characteristic, clear
-                // it first so it doesn't update the data field on the user interface.
-                if (mNotifyCharacteristic != null) {
-                    mBluetoothLeService!!.setCharacteristicNotification(
-                            mNotifyCharacteristic!!, false)
-                    mNotifyCharacteristic = null
-                }
-                mBluetoothLeService!!.readCharacteristic(characteristic)
-            }
-            if (charaProp or BluetoothGattCharacteristic.PROPERTY_NOTIFY > 0) {
-                mNotifyCharacteristic = characteristic
-                mBluetoothLeService!!.setCharacteristicNotification(
-                        characteristic, true)
-            }
-            return@OnChildClickListener true
-        }
-        false
+    private fun parseTemp(temp: String): String {
+        val regex1 = """(T=)""".toRegex()
+        val temp2 = regex1.replace(temp, "")
+        val regex2 = """(,)""".toRegex()
+        return regex2.replace(temp2,".")
     }
 
-    // Demonstrates how to iterate through the supported GATT Services/Characteristics.
-    // In this sample, we populate the data structure that is bound to the ExpandableListView
-    // on the UI.
-    private fun displayGattServices(gattServices: List<BluetoothGattService>?) {
-        if (gattServices == null) return
-        var uuid: String? = null
-        val gattServiceData = ArrayList<HashMap<String, String>>()
-        val gattCharacteristicData = ArrayList<ArrayList<HashMap<String, String>>>()
-        mGattCharacteristics = ArrayList<ArrayList<BluetoothGattCharacteristic>>()
-        for (gattService in gattServices) {
-
-        }
+    private fun parseWeight(weight: String): String {
+        val regex1 = """(W=)""".toRegex()
+        return regex1.replace(weight, "")
     }
 
     companion object {
-        @JvmField
-        var EXTRAS_DEVICE_NAME = "DEVICE_NAME"
-        @JvmField
-        var EXTRAS_DEVICE_ADDRESS = "DEVICE_ADDRESS"
-
         private fun makeGattUpdateIntentFilter(): IntentFilter {
             val intentFilter = IntentFilter()
             intentFilter.addAction(BluetoothLeService.ACTION_GATT_CONNECTED)
             intentFilter.addAction(BluetoothLeService.ACTION_GATT_DISCONNECTED)
-            intentFilter.addAction(BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED)
             intentFilter.addAction(BluetoothLeService.ACTION_DATA_AVAILABLE)
             return intentFilter
         }

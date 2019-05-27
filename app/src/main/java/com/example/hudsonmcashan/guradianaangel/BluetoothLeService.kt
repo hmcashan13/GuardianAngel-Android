@@ -47,14 +47,8 @@ class BluetoothLeService : Service() {
             }
         }
 
-        // New services discovered
         override fun onServicesDiscovered(gatt: BluetoothGatt, status: Int) {
-            when (status) {
-                BluetoothGatt.GATT_SUCCESS -> broadcastUpdate(ACTION_GATT_SERVICES_DISCOVERED)
-                else -> Log.w(TAG_BLUETOOTH, "onServicesDiscovered received: $status")
-            }
             Log.d(TAG_BLUETOOTH, "Services discovered")
-
             val service = mBluetoothGatt!!.getService(UUID_SERVICE_UART)
             val characteristicTx = service.getCharacteristic(UUID_CHARACT_TX)
 

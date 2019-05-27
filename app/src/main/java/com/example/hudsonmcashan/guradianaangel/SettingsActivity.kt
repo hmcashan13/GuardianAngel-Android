@@ -15,7 +15,7 @@ class SettingsActivity : AppCompatActivity() {
         val context = this
         val listView = findViewById<ListView>(R.id.settings_listview)
         val settings = arrayListOf<String>(
-                "Adjust Temperature Sensor","Change Email","Change Profile Image", "Change Password", "Delete Account"
+                "Adjust Temperature Sensor","Disconnect from Bluetooth"
         )
         listView.adapter = SettingsAdapter(this, settings)
         listView.setOnItemClickListener { _, _, position, _ ->
