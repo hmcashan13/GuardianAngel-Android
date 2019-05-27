@@ -4,7 +4,6 @@ import android.annotation.TargetApi
 import android.app.*
 import android.bluetooth.*
 import android.bluetooth.le.*
-import android.content.Intent
 import android.os.Bundle
 import android.os.RemoteException
 import android.support.v7.app.AppCompatActivity
@@ -13,9 +12,7 @@ import android.widget.Button
 import kotlinx.android.synthetic.main.activity_connection.*
 import java.util.*
 import org.altbeacon.beacon.*
-import android.support.v7.app.AlertDialog;
-import android.content.Context
-import android.content.DialogInterface
+import android.support.v7.app.AlertDialog
 import android.content.pm.PackageManager
 import android.graphics.BitmapFactory
 import android.graphics.Color
@@ -23,16 +20,23 @@ import android.os.Build
 import android.widget.RemoteViews
 import android.widget.Toast
 import org.jetbrains.anko.toast
-import kotlin.collections.HashMap
-import kotlin.concurrent.schedule
-import kotlin.concurrent.timerTask
+import android.bluetooth.BluetoothAdapter
+import android.bluetooth.BluetoothAdapter.STATE_CONNECTED
+import android.bluetooth.BluetoothAdapter.STATE_DISCONNECTED
+import android.bluetooth.BluetoothDevice
+import android.bluetooth.BluetoothSocket
+import android.content.*
+import android.os.IBinder
+import android.widget.ExpandableListView
+import java.io.IOException
+import java.io.InputStream
+
+// Tags
+val TAG_BEACON = "BeaconDeviceActivity"
+val TAG_BLUETOOTH = "BluetoothDeviceActivity"
 
 @TargetApi(21)
 class DeviceActivity : AppCompatActivity(), BeaconConsumer {
-    // Tags
-    val TAG_BEACON = "BeaconDeviceActivity"
-    val TAG_BLUETOOTH = "BluetoothDeviceActivity"
-
     // Notification properties
     lateinit var notificationManager: NotificationManager
     lateinit var notificationChannel: NotificationChannel
@@ -48,38 +52,53 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
     lateinit var my_region: Region
 
     // Bluetooth properties
-    private lateinit var bluetoothManager: BluetoothManager
+    lateinit var bluetoothDevice: BluetoothDevice
+    lateinit var bluetoothManager: BluetoothManager
     lateinit var bluetoothAdapter: BluetoothAdapter
     lateinit var bleScanner: BluetoothLeScanner
-    lateinit var scanCallback: ScanCallback
     lateinit var bleScanCallback: BluetoothAdapter.LeScanCallback
-    lateinit var bleGattCallback: BluetoothGattCallback
-    lateinit var uartGatt: BluetoothGatt
+    private val  bluetoothServce = BluetoothLeService()
 
-    val UART_UUID = UUID.fromString("8519BF04-6C36-4B4A-4182-A2764CE2E05A")
-    val UUID_SERVICE_UART = UUID.fromString("6E400001-B5A3-F393-E0A9-E50E24DCCA9E")
-    val UUID_CHARACT_TX   = UUID.fromString("6E400002-B5A3-F393-E0A9-E50E24DCCA9E")
+    private var mDeviceAddress: String = "C8:84:47:1E:73:4E"
+    private var mBluetoothLeService: BluetoothLeService? = null
+    private var mGattCharacteristics: ArrayList<ArrayList<BluetoothGattCharacteristic>>? = ArrayList()
+    private var mConnected = false
+    private var mNotifyCharacteristic: BluetoothGattCharacteristic? = null
 
-    val DEFAULT_SCAN_TIMEOUT = 5000L
+    val ENABLE_BT_REQUEST_CODE = 1
+
+    var connectionState = STATE_DISCONNECTED
 
     var isBabyInSeat: Boolean = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
-            super.onCreate(savedInstanceState)
-            setContentView(R.layout.activity_connection)
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_connection)
 
-            setupSettingsButton()
-            setupNotificationManager()
-            setupBeacon()
-            //TODO: set UART up properly
-            setupUART()
+        setupSettingsButton()
+        setupNotificationManager()
+        setupBeacon()
+        //TODO: set UART up properly
+
+
+        setupUART()
     }
+
+    override fun onResume() {
+        super.onResume()
+        registerReceiver(mGattUpdateReceiver, makeGattUpdateIntentFilter())
+    }
+
+//    override fun onPause() {
+//        super.onPause()
+//        unregisterReceiver(mGattUpdateReceiver)
+//    }
 
     override fun onDestroy() {
         super.onDestroy()
         beaconManager.unbind(this)
-//        if (isScanning) stopScanning()
-//        if (uartGatt.device.bondState >= BluetoothGatt.STATE_CONNECTED) disconnect()
+        unbindService(mServiceConnection)
+        mBluetoothLeService = null
     }
 
     private fun setupSettingsButton() {
@@ -114,16 +133,66 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
         }
     }
 
-    private fun setupUART() {
-        // Setup UART
-        if (Build.VERSION.SDK_INT > 21) {
-            bluetoothManager = getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
-            bluetoothAdapter = bluetoothManager.adapter
-            setupCallBacks()
-            startScan()
+    // Code to manage Service lifecycle.
+    private val mServiceConnection = object : ServiceConnection {
 
-            Log.i(TAG_BLUETOOTH, "UART setup")
-            //connectTo(UART_UUID)
+        override fun onServiceConnected(componentName: ComponentName, service: IBinder) {
+            Log.d(TAG_BLUETOOTH, "Just making sure this thing works ya know")
+            mBluetoothLeService = (service as BluetoothLeService.LocalBinder).service
+            if (!mBluetoothLeService!!.initialize()) {
+                Log.e(TAG_BLUETOOTH, "Unable to initialize Bluetooth")
+                finish()
+            }
+            // Automatically connects to the device upon successful start-up initialization.
+            mBluetoothLeService!!.connect(mDeviceAddress)
+        }
+
+        override fun onServiceDisconnected(componentName: ComponentName) {
+            Log.d(TAG_BLUETOOTH, "If I put enough print statements, surely something will be printed")
+            mBluetoothLeService = null
+        }
+    }
+
+    private fun setupUART() {
+        bluetoothManager = getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
+        bluetoothAdapter = bluetoothManager.adapter
+        if (bluetoothAdapter == null) {
+            // Bluetooth is not supported
+            Toast.makeText(applicationContext,"This device doesn’t support Bluetooth",Toast.LENGTH_SHORT).show()
+        } else {
+            if (!bluetoothAdapter.isEnabled) {
+                // Bluetooth is not enabled
+                val enableBtIntent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
+                this@DeviceActivity.startActivityForResult(enableBtIntent, ENABLE_BT_REQUEST_CODE)
+                Toast.makeText(applicationContext, "Enabling Bluetooth!", Toast.LENGTH_LONG).show()
+            } else {
+                // Bluetooth is enabled
+                startScan()
+                Intent(this@DeviceActivity, BluetoothLeService::class.java).also {
+                    bindService(it, mServiceConnection, Context.BIND_AUTO_CREATE)
+                }
+                Log.i(TAG_BLUETOOTH, "UART setup")
+            }
+
+        }
+    }
+
+    // Used to enable Bluetooth
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        //Check what request we’re responding to//
+        if (requestCode == ENABLE_BT_REQUEST_CODE) {
+            //If the request was successful…//
+            if (resultCode == Activity.RESULT_OK) {
+                //...then display the following toast.//
+                Toast.makeText(applicationContext, "Bluetooth has been enabled", Toast.LENGTH_SHORT).show()
+            }
+
+            //If the request was unsuccessful...//
+            if(resultCode == RESULT_CANCELED){
+                //...then display this alternative toast.//
+                Toast.makeText(getApplicationContext(), "An error occurred while attempting to enable Bluetooth",
+                        Toast.LENGTH_SHORT).show()
+            }
         }
     }
 
@@ -232,6 +301,14 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
     }
 
     // UART functions
+    private fun checkBondedDevices() {
+        val pairedDevices = bluetoothAdapter.bondedDevices
+        if (pairedDevices.size > 0) {
+            for (device in pairedDevices) {
+                Log.i(TAG_BLUETOOTH, "paired device name: $device.name address: ${device.address}")
+            }
+        }
+    }
     private fun startScan() {
         if (bluetoothAdapter.isEnabled) {
             bleScanner = bluetoothAdapter.bluetoothLeScanner
@@ -251,50 +328,114 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
         }
     }
 
-    private fun setupCallBacks() {
-        scanCallback = object: ScanCallback() {
-            override fun onScanResult(callbackType: Int, result: ScanResult) {
-
-                Log.i(TAG_BLUETOOTH, "Scanned devices: " + result.device.name)
-                if("NORDIC_USART".equals(result.device.name)) {
-                    bleScanner.stopScan(scanCallback)
-                    uartGatt = result.device.connectGatt(
-                            applicationContext, false, bleGattCallback)
+    val scanCallback = object: ScanCallback() {
+        override fun onScanResult(callbackType: Int, result: ScanResult) {
+            if("NORDIC_USART" == result.device.name) {
+                mDeviceAddress = result.device.address
+                Log.i(TAG_BLUETOOTH, "Connecting to Guardian Angel: $mDeviceAddress")
+                stopScan()
+                if (mBluetoothLeService != null) {
+                    val result = mBluetoothLeService!!.connect(mDeviceAddress)
+                    Log.d(TAG_BLUETOOTH, "Connect request result=" + result)
                 }
-                super.onScanResult(callbackType, result)
             }
+            super.onScanResult(callbackType, result)
         }
+    }
 
-        bleGattCallback = object: BluetoothGattCallback() {
-            override fun onConnectionStateChange(gatt: BluetoothGatt?, status: Int, newState: Int) {
-                gatt?.discoverServices()
-                super.onConnectionStateChange(gatt, status, newState)
-            }
-
-            override fun onServicesDiscovered(gatt: BluetoothGatt?, status: Int) {
-                val uartService = gatt?.getService(UUID_SERVICE_UART)
-                if (uartService != null) {
-                    val uartCharacteristic = uartService.getCharacteristic(UUID_CHARACT_TX)
-                    Log.i(TAG_BLUETOOTH, "TX Characterstic found")
-                    gatt.readCharacteristic(uartCharacteristic)
-
-                } else {
-                    Log.i(TAG_BLUETOOTH, "uart service was not found")
-                }
-                super.onServicesDiscovered(gatt, status)
-            }
-
-            override fun onCharacteristicRead(gatt: BluetoothGatt?, characteristic: BluetoothGattCharacteristic?, status: Int) {
-                if (characteristic != null) {
-                    val value: String = characteristic.getStringValue(0)
-                    Log.i(TAG_BLUETOOTH, "uart string: $value")
-                } else {
-                    Log.i(TAG_BLUETOOTH, "uart service was not found")
-                }
-
-
-                super.onCharacteristicRead(gatt, characteristic, status)
+    // Handles various events fired by the Service.
+    // ACTION_GATT_CONNECTED: connected to a GATT server.
+    // ACTION_GATT_DISCONNECTED: disconnected from a GATT server.
+    // ACTION_GATT_SERVICES_DISCOVERED: discovered GATT services.
+    // ACTION_DATA_AVAILABLE: received data from the device.  This can be a result of read
+    //                        or notification operations.
+    private val mGattUpdateReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            val action = intent.action
+            if (BluetoothLeService.ACTION_GATT_CONNECTED == action) {
+                mConnected = true
+                Log.d(TAG_BLUETOOTH, "Connected receiver")
+                //updateConnectionState(R.string.connected)
+            } else if (BluetoothLeService.ACTION_GATT_DISCONNECTED == action) {
+                mConnected = false
+                Log.d(TAG_BLUETOOTH, "Disconnected receiver")
+                //updateConnectionState(R.string.disconnected)
+                //clearUI()
+            } else if (BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED == action) {
+                // Show all the supported services and characteristics on the user interface.
+                Log.d(TAG_BLUETOOTH, "Discovered receiver")
+                displayGattServices(mBluetoothLeService!!.supportedGattServices)
+            } else if (BluetoothLeService.ACTION_DATA_AVAILABLE == action) {
+                Log.d(TAG_BLUETOOTH, "Data available receiver")
+                displayData(intent.getStringExtra(BluetoothLeService.EXTRA_DATA))
             }
         }
     }
+
+
+    private fun displayData(data: String?) {
+        if (data != null) {
+            //mDataField!!.text = data
+            Log.i(TAG_BLUETOOTH, "data from uart: $data")
+        }
+    }
+
+    // If a given GATT characteristic is selected, check for supported features.  This sample
+    // demonstrates 'Read' and 'Notify' features.  See
+    // http://d.android.com/reference/android/bluetooth/BluetoothGatt.html for the complete
+    // list of supported characteristic features.
+    private val servicesListClickListner = ExpandableListView.OnChildClickListener { parent, v, groupPosition, childPosition, id ->
+        if (mGattCharacteristics != null) {
+            val characteristic = mGattCharacteristics!![groupPosition][childPosition]
+            val charaProp = characteristic.properties
+            if (charaProp or BluetoothGattCharacteristic.PROPERTY_READ > 0) {
+                // If there is an active notification on a characteristic, clear
+                // it first so it doesn't update the data field on the user interface.
+                if (mNotifyCharacteristic != null) {
+                    mBluetoothLeService!!.setCharacteristicNotification(
+                            mNotifyCharacteristic!!, false)
+                    mNotifyCharacteristic = null
+                }
+                mBluetoothLeService!!.readCharacteristic(characteristic)
+            }
+            if (charaProp or BluetoothGattCharacteristic.PROPERTY_NOTIFY > 0) {
+                mNotifyCharacteristic = characteristic
+                mBluetoothLeService!!.setCharacteristicNotification(
+                        characteristic, true)
+            }
+            return@OnChildClickListener true
+        }
+        false
+    }
+
+    // Demonstrates how to iterate through the supported GATT Services/Characteristics.
+    // In this sample, we populate the data structure that is bound to the ExpandableListView
+    // on the UI.
+    private fun displayGattServices(gattServices: List<BluetoothGattService>?) {
+        if (gattServices == null) return
+        var uuid: String? = null
+        val gattServiceData = ArrayList<HashMap<String, String>>()
+        val gattCharacteristicData = ArrayList<ArrayList<HashMap<String, String>>>()
+        mGattCharacteristics = ArrayList<ArrayList<BluetoothGattCharacteristic>>()
+        for (gattService in gattServices) {
+
+        }
+    }
+
+    companion object {
+        @JvmField
+        var EXTRAS_DEVICE_NAME = "DEVICE_NAME"
+        @JvmField
+        var EXTRAS_DEVICE_ADDRESS = "DEVICE_ADDRESS"
+
+        private fun makeGattUpdateIntentFilter(): IntentFilter {
+            val intentFilter = IntentFilter()
+            intentFilter.addAction(BluetoothLeService.ACTION_GATT_CONNECTED)
+            intentFilter.addAction(BluetoothLeService.ACTION_GATT_DISCONNECTED)
+            intentFilter.addAction(BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED)
+            intentFilter.addAction(BluetoothLeService.ACTION_DATA_AVAILABLE)
+            return intentFilter
+        }
+    }
+
 }
