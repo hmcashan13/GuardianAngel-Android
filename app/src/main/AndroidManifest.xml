@@ -29,6 +29,9 @@
         <activity android:name=".DeviceActivity"
             android:screenOrientation="portrait">
         </activity>
+        <activity android:name=".TemperatureAdjustActivity"
+            android:screenOrientation="portrait">
+        </activity>
         <service
             android:name=".BluetoothLeService"
             android:enabled="true"

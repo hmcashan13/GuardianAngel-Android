@@ -9,13 +9,13 @@
 
     <TextView
         android:id="@+id/temp_text"
-        android:layout_width="331dp"
+        android:layout_width="0dp"
         android:layout_height="29dp"
-        android:layout_marginStart="8dp"
-        android:layout_marginLeft="8dp"
+        android:layout_marginStart="24dp"
+        android:layout_marginLeft="24dp"
         android:layout_marginTop="32dp"
-        android:layout_marginEnd="8dp"
-        android:layout_marginRight="8dp"
+        android:layout_marginEnd="24dp"
+        android:layout_marginRight="24dp"
         android:background="@drawable/rounded_button2"
         android:text="  Temperature:"
         android:textColor="@android:color/holo_purple"
@@ -27,7 +27,7 @@
 
     <TextView
         android:id="@+id/beacon_text"
-        android:layout_width="330dp"
+        android:layout_width="0dp"
         android:layout_height="29dp"
         android:layout_marginTop="20dp"
         android:background="@drawable/rounded_button2"
@@ -42,7 +42,7 @@
 
     <TextView
         android:id="@+id/baby_in_seat_text"
-        android:layout_width="330dp"
+        android:layout_width="0dp"
         android:layout_height="29dp"
         android:layout_marginTop="20dp"
         android:background="@drawable/rounded_button2"
@@ -58,8 +58,8 @@
 
     <Button
         android:id="@+id/settings_button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="78dp"
+        android:layout_height="40dp"
         android:layout_marginTop="8dp"
         android:layout_marginEnd="8dp"
         android:layout_marginRight="8dp"
@@ -71,13 +71,16 @@
 
     <ImageView
         android:id="@+id/connection_logo"
-        android:layout_width="192dp"
-        android:layout_height="115dp"
+        android:layout_width="220dp"
+        android:layout_height="134dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginLeft="8dp"
         android:layout_marginEnd="8dp"
         android:layout_marginRight="8dp"
         android:adjustViewBounds="true"
         android:scaleType="fitCenter"
-        app:layout_constraintEnd_toStartOf="@+id/settings_button"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:srcCompat="@mipmap/new_logo_foreground" />
 

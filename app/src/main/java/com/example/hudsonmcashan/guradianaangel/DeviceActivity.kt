@@ -33,17 +33,12 @@ import java.io.InputStream
 import kotlin.math.roundToInt
 
 // Tags
-val TAG_BEACON = "BeaconDeviceActivity"
-val TAG_BLUETOOTH = "BluetoothDeviceActivity"
+const val TAG_BEACON = "BeaconDeviceActivity"
+const val TAG_BLUETOOTH = "BluetoothDeviceActivity"
 
 @TargetApi(21)
 class DeviceActivity : AppCompatActivity(), BeaconConsumer {
     // Notification properties
-    lateinit var notificationManager: NotificationManager
-    lateinit var notificationChannel: NotificationChannel
-    lateinit var builder: Notification.Builder
-    private val channelId = "com.example.hudsonmcashan.guradianaangel"
-    private val title = "Guardian Angel"
     private val outOfRegionNotificationDescription = "Your too far away from your baby"
     private val inRegionNotificationDescription = "Entered region"
     private val tooHotNotificationDescription = "Your car is too hot"
@@ -67,11 +62,7 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
         setContentView(R.layout.activity_connection)
 
         setupSettingsButton()
-        setupNotificationManager()
         setupBeacon()
-        //TODO: set UART up properly
-
-
         setupUART()
     }
 
@@ -80,16 +71,15 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
         registerReceiver(mGattUpdateReceiver, makeGattUpdateIntentFilter())
     }
 
-//    override fun onPause() {
-//        super.onPause()
-//        unregisterReceiver(mGattUpdateReceiver)
-//    }
-
     override fun onDestroy() {
         super.onDestroy()
+        // turn off beacon
         beaconManager.unbind(this)
+        // turn off uart
         unbindService(mServiceConnection)
         mBluetoothLeService = null
+        // turn off receiver
+        unregisterReceiver(mGattUpdateReceiver)
     }
 
     private fun setupSettingsButton() {
@@ -98,9 +88,6 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
         }
     }
 
-    private fun setupNotificationManager() {
-        notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-    }
 
     private fun setupBeacon() {
         beaconManager = BeaconManager.getInstanceForApplication(this)
@@ -121,26 +108,6 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
                 builder.setOnDismissListener(DialogInterface.OnDismissListener { requestPermissions(arrayOf(android.Manifest.permission.ACCESS_COARSE_LOCATION), 1) })
                 builder.show()
             }
-        }
-    }
-
-    // Code to manage Service lifecycle.
-    private val mServiceConnection = object : ServiceConnection {
-
-        override fun onServiceConnected(componentName: ComponentName, service: IBinder) {
-            Log.d(TAG_BLUETOOTH, "Just making sure this thing works ya know")
-            mBluetoothLeService = (service as BluetoothLeService.LocalBinder).service
-            if (!mBluetoothLeService!!.initialize()) {
-                Log.e(TAG_BLUETOOTH, "Unable to initialize Bluetooth")
-                finish()
-            }
-            // Automatically connects to the device upon successful start-up initialization.
-            mBluetoothLeService!!.connect(mDeviceAddress)
-        }
-
-        override fun onServiceDisconnected(componentName: ComponentName) {
-            Log.d(TAG_BLUETOOTH, "If I put enough print statements, surely something will be printed")
-            mBluetoothLeService = null
         }
     }
 
@@ -168,6 +135,25 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
         }
     }
 
+    // Used to connect UART
+    private val mServiceConnection = object : ServiceConnection {
+        override fun onServiceConnected(componentName: ComponentName, service: IBinder) {
+            Log.d(TAG_BLUETOOTH, "Just making sure this thing works ya know")
+            mBluetoothLeService = (service as BluetoothLeService.LocalBinder).service
+            if (!mBluetoothLeService!!.initialize()) {
+                Log.e(TAG_BLUETOOTH, "Unable to initialize Bluetooth")
+                finish()
+            }
+            // Automatically connects to the device upon successful start-up initialization.
+            mBluetoothLeService!!.connect(mDeviceAddress)
+        }
+
+        override fun onServiceDisconnected(componentName: ComponentName) {
+            Log.d(TAG_BLUETOOTH, "If I put enough print statements, surely something will be printed")
+            mBluetoothLeService = null
+        }
+    }
+
     // Used to enable Bluetooth
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         //Check what request we’re responding to//
@@ -189,6 +175,11 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
 
     // Notification
     private fun sendNotification(description: String) {
+        val notificationManager: NotificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        lateinit var notificationChannel: NotificationChannel
+        lateinit var builder: Notification.Builder
+        val channelId = "com.example.hudsonmcashan.guradianaangel"
+        val title = "Guardian Angel"
         val intent = Intent(this, DeviceActivity::class.java)
         val pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT)
 
