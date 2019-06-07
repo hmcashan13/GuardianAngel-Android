@@ -2,7 +2,7 @@
 <android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/celsiusOrFarenheit_status"
+    android:id="@+id/farenheitCelsius_text"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
@@ -32,22 +32,6 @@
         android:layout_height="29dp"
         android:layout_marginTop="32dp"
         android:background="@drawable/rounded_button2"
-        android:text="  Max Temp:"
-        android:textAppearance="@style/TextAppearance.AppCompat.Caption"
-        android:textColor="@android:color/holo_purple"
-        android:textColorLink="@color/colorPrimary"
-        android:textSize="18sp"
-        app:layout_constraintEnd_toEndOf="@+id/celsiusFarenheit_label2"
-        app:layout_constraintStart_toStartOf="@+id/celsiusFarenheit_label2"
-        app:layout_constraintTop_toBottomOf="@+id/celsiusFarenheit_label2"
-        tools:text="  Max Temperature:" />
-
-    <TextView
-        android:id="@+id/celsiusFarenheit_label2"
-        android:layout_width="0dp"
-        android:layout_height="29dp"
-        android:layout_marginTop="32dp"
-        android:background="@drawable/rounded_button2"
         android:text="  Farenheit or Celsius:"
         android:textAppearance="@style/TextAppearance.AppCompat.Caption"
         android:textColor="@android:color/holo_purple"
@@ -58,8 +42,36 @@
         app:layout_constraintTop_toBottomOf="@+id/tempSensorOnOff_label"
         tools:text="  Celsius or Farenheit:" />
 
+    <TextView
+        android:id="@+id/maxTemp_label"
+        android:layout_width="0dp"
+        android:layout_height="29dp"
+        android:layout_marginTop="32dp"
+        android:background="@drawable/rounded_button2"
+        android:text="  Max Temperature:"
+        android:textAppearance="@style/TextAppearance.AppCompat.Caption"
+        android:textColor="@android:color/holo_purple"
+        android:textColorLink="@color/colorPrimary"
+        android:textSize="18sp"
+        app:layout_constraintEnd_toEndOf="@+id/celsiusFarenheit_label"
+        app:layout_constraintStart_toStartOf="@+id/celsiusFarenheit_label"
+        app:layout_constraintTop_toBottomOf="@+id/celsiusFarenheit_label"
+        tools:text="  Max Temperature:" />
+
+
+    <TextView
+        android:id="@+id/maxTemp_status"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="8dp"
+        android:layout_marginRight="8dp"
+        android:text="TextView"
+        app:layout_constraintBottom_toBottomOf="@+id/maxTemp_label"
+        app:layout_constraintEnd_toEndOf="@+id/maxTemp_label"
+        app:layout_constraintTop_toTopOf="@+id/maxTemp_label" />
+
     <Switch
-        android:id="@+id/tempSensor_switch"
+        android:id="@+id/tempSensorOnOff_switch"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginEnd="8dp"
@@ -70,49 +82,50 @@
         app:layout_constraintTop_toTopOf="@+id/tempSensorOnOff_label" />
 
     <Switch
-        android:id="@+id/celsiusOrFarenheit_switch"
+        android:id="@+id/farenheitCelsius_switch"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginEnd="8dp"
         android:layout_marginRight="8dp"
         android:checked="true"
-        app:layout_constraintBottom_toBottomOf="@+id/celsiusFarenheit_label2"
-        app:layout_constraintEnd_toEndOf="@+id/celsiusFarenheit_label2"
-        app:layout_constraintTop_toTopOf="@+id/celsiusFarenheit_label2"
+        app:layout_constraintBottom_toBottomOf="@+id/celsiusFarenheit_label"
+        app:layout_constraintEnd_toEndOf="@+id/celsiusFarenheit_label"
+        app:layout_constraintTop_toTopOf="@+id/celsiusFarenheit_label"
         tools:checked="true" />
 
     <TextView
-        android:id="@+id/textView"
+        android:id="@+id/tempSensorOnOff_status"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginEnd="8dp"
         android:layout_marginRight="8dp"
         android:text="TextView"
-        app:layout_constraintBottom_toBottomOf="@+id/celsiusFarenheit_label2"
-        app:layout_constraintEnd_toStartOf="@+id/celsiusOrFarenheit_switch"
-        app:layout_constraintTop_toTopOf="@+id/celsiusFarenheit_label2" />
+        app:layout_constraintBottom_toBottomOf="@+id/tempSensorOnOff_label"
+        app:layout_constraintEnd_toStartOf="@+id/tempSensorOnOff_switch"
+        app:layout_constraintTop_toTopOf="@+id/tempSensorOnOff_label" />
 
     <SeekBar
-        android:id="@+id/seekBar3"
+        android:id="@+id/maxTemp_slider"
         android:layout_width="0dp"
-        android:layout_height="wrap_content"
+        android:layout_height="38dp"
         android:layout_marginTop="32dp"
         android:indeterminate="false"
         android:max="20"
         android:progress="10"
-        app:layout_constraintEnd_toEndOf="@+id/celsiusFarenheit_label"
-        app:layout_constraintStart_toStartOf="@+id/celsiusFarenheit_label"
-        app:layout_constraintTop_toBottomOf="@+id/celsiusFarenheit_label" />
+        app:layout_constraintEnd_toEndOf="@+id/maxTemp_label"
+        app:layout_constraintStart_toStartOf="@+id/maxTemp_label"
+        app:layout_constraintTop_toBottomOf="@+id/maxTemp_label" />
 
     <TextView
-        android:id="@+id/textView2"
+        android:id="@+id/farenheitCelsius_status"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginEnd="8dp"
         android:layout_marginRight="8dp"
         android:text="TextView"
         app:layout_constraintBottom_toBottomOf="@+id/celsiusFarenheit_label"
-        app:layout_constraintEnd_toEndOf="@+id/celsiusFarenheit_label"
-        app:layout_constraintTop_toTopOf="@+id/celsiusFarenheit_label" />
+        app:layout_constraintEnd_toStartOf="@+id/farenheitCelsius_switch"
+        app:layout_constraintTop_toTopOf="@+id/celsiusFarenheit_label"
+        app:layout_constraintVertical_bias="0.48000002" />
 
 </android.support.constraint.ConstraintLayout>
