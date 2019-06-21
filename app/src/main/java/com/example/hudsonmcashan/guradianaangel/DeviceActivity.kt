@@ -61,6 +61,7 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_connection)
 
+        setupInfoButton()
         setupSettingsButton()
         setupBeacon()
         setupUART()
@@ -80,6 +81,12 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
         mBluetoothLeService = null
         // turn off receiver
         unregisterReceiver(mGattUpdateReceiver)
+    }
+
+    private fun setupInfoButton() {
+        info_device_button.setOnClickListener {
+
+        }
     }
 
     private fun setupSettingsButton() {
@@ -210,6 +217,18 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
             notificationManager.notify(1, builder.build())
         }
     }
+
+    // Settings
+    private fun launchInfo() {
+        // launch the settings activity
+        val infoButton = findViewById<Button>(R.id.info_device_button)
+        infoButton.setOnClickListener {
+            val intent = Intent(this, SettingsActivity::class.java)
+            startActivity(intent)
+        }
+
+    }
+
 
     // Settings
     private fun launchSettings() {

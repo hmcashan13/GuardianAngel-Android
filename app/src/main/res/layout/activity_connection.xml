@@ -126,4 +126,17 @@
         app:layout_constraintTop_toTopOf="@+id/baby_in_seat_text"
         tools:text="No" />
 
+    <Button
+        android:id="@+id/info_device_button"
+        android:layout_width="78dp"
+        android:layout_height="40dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginLeft="8dp"
+        android:layout_marginTop="8dp"
+        android:background="@drawable/rounded_button"
+        android:text="Info"
+        android:textColor="@android:color/white"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
 </android.support.constraint.ConstraintLayout>
