@@ -21,15 +21,9 @@ import android.widget.RemoteViews
 import android.widget.Toast
 import org.jetbrains.anko.toast
 import android.bluetooth.BluetoothAdapter
-import android.bluetooth.BluetoothAdapter.STATE_CONNECTED
-import android.bluetooth.BluetoothAdapter.STATE_DISCONNECTED
-import android.bluetooth.BluetoothDevice
-import android.bluetooth.BluetoothSocket
 import android.content.*
 import android.os.IBinder
-import android.widget.ExpandableListView
-import java.io.IOException
-import java.io.InputStream
+import com.example.hudsonmcashan.guradianaangel.Settings.SettingsActivity
 import kotlin.math.roundToInt
 
 // Tags

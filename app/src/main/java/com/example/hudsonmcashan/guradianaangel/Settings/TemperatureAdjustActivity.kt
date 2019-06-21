@@ -1,9 +1,10 @@
-package com.example.hudsonmcashan.guradianaangel
+package com.example.hudsonmcashan.guradianaangel.Settings
 
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.widget.SeekBar
 import android.widget.Toast
+import com.example.hudsonmcashan.guradianaangel.R
 import kotlinx.android.synthetic.main.activity_temperature.*
 
 class TemperatureAdjustActivity : AppCompatActivity() {

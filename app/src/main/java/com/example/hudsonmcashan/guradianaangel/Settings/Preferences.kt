@@ -1,4 +1,4 @@
-package com.example.hudsonmcashan.guradianaangel
+package com.example.hudsonmcashan.guradianaangel.Settings
 
 import android.content.Context
 import android.content.SharedPreferences

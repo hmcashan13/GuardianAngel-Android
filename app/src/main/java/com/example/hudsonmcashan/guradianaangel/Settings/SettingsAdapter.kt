@@ -1,4 +1,4 @@
-package com.example.hudsonmcashan.guradianaangel
+package com.example.hudsonmcashan.guradianaangel.Settings
 
 import android.content.Context
 import android.graphics.Color
@@ -7,7 +7,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.BaseAdapter
 import android.widget.TextView
-import javax.sql.CommonDataSource
+import com.example.hudsonmcashan.guradianaangel.R
 
 class SettingsAdapter(private val context: Context,
                       private val dataSource: ArrayList<String>): BaseAdapter() {

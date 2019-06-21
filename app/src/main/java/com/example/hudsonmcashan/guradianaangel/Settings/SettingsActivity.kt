@@ -1,12 +1,10 @@
-package com.example.hudsonmcashan.guradianaangel
+package com.example.hudsonmcashan.guradianaangel.Settings
 
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.widget.ListView
-import android.widget.Toast
-import kotlinx.android.synthetic.main.activity_connection.*
 import android.content.Intent
-import android.util.Log
+import com.example.hudsonmcashan.guradianaangel.R
 
 val TAG_SETTINGS = "SettingsActivity"
 class SettingsActivity : AppCompatActivity() {
