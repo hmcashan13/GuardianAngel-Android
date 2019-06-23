@@ -9,7 +9,6 @@ import android.bluetooth.le.*
 import android.os.Bundle
 import android.os.RemoteException
 import android.support.v7.app.AppCompatActivity
-import android.util.Log
 import android.widget.Button
 import kotlinx.android.synthetic.main.activity_connection.*
 import java.util.*
@@ -24,26 +23,26 @@ import android.widget.Toast
 import org.jetbrains.anko.toast
 import android.bluetooth.BluetoothAdapter
 import android.content.*
-import android.media.audiofx.BassBoost
 import android.os.IBinder
 import android.provider.Settings
-import android.text.Layout
 import android.util.Log.*
-import android.view.MenuItem
+import com.example.hudsonmcashan.guradianaangel.Settings.Prefs
 import com.example.hudsonmcashan.guradianaangel.Settings.SettingsActivity
 import kotlin.math.roundToInt
+
+// App info
+const val appIdentifier = "com.example.hudsonmcashan.guradianaangel"
+const val appTitle = "Guardian Angel"
 
 // Tags
 const val TAG_BEACON = "BeaconDeviceActivity"
 const val TAG_BLUETOOTH = "BluetoothDeviceActivity"
 
-val STATE_DISCONNECTED = 0
-val STATE_CONNECTING = 1
-val STATE_CONNECTED = 2
+// State of connection
+const val STATE_DISCONNECTED = 0
+const val STATE_CONNECTING = 1
+const val STATE_CONNECTED = 2
 var mConnectionState = STATE_DISCONNECTED
-
-val appIdentifier = "com.example.hudsonmcashan.guradianaangel"
-val appTitle = "Guardian Angel"
 
 @Suppress("DEPRECATION")
 @TargetApi(23)
@@ -65,10 +64,14 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
     val ENABLE_BT_REQUEST_CODE = 1
     var isBabyInSeat: Boolean = false
 
+    // Preference properties
+    var prefs: Prefs? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_connection)
 
+        prefs = Prefs(this)
         setupActionBar()
         setupWriteSettings()
         setupInfoButton()
@@ -93,8 +96,6 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
         // turn off receiver
         unregisterReceiver(mGattUpdateReceiver)
     }
-
-
 
     private fun setupActionBar() {
         setSupportActionBar(findViewById(R.id.device_toolbar))
@@ -173,8 +174,6 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
         } else {
             // Bluetooth is enabled
             startScan()
-            mConnectionState = STATE_CONNECTING
-            setActionBarTitle(mConnectionState)
             Intent(this@DeviceActivity, BluetoothLeService::class.java).also {
                 bindService(it, mServiceConnection, Context.BIND_AUTO_CREATE)
             }
@@ -324,8 +323,10 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
 
     private val scanCallback = object: ScanCallback() {
         override fun onScanResult(callbackType: Int, result: ScanResult) {
-            i(TAG_BLUETOOTH, "Scanning...")
-            if("NORDIC_USART" == result.device.name) {
+            if("NORDIC_USART" == result.device.name && mConnectionState != STATE_CONNECTING) {
+                i(TAG_BLUETOOTH, "Scanning...")
+                mConnectionState = STATE_CONNECTING
+                setActionBarTitle(mConnectionState)
                 mDeviceAddress = result.device.address
                 i(TAG_BLUETOOTH, "Connecting to Guardian Angel: $mDeviceAddress")
                 stopScan()
@@ -371,13 +372,20 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
             val rawWeight = dataArray[1]
             val celsiusTemp = parseTemp(rawTemp)
             val weight = parseWeight(rawWeight).toInt()
-            val farenheitTemp = (celsiusTemp.toDouble() * 9/5 + 32).roundToInt().toString()
-            val farenheitTempWithDegree = "$farenheitTemp°F"
-            temp_label!!.text = farenheitTempWithDegree
+            val fahrenheitCelsius = prefs?.fahrenheitCelsius ?: true
+            if (fahrenheitCelsius) {
+                val fahrenheitTemp = (celsiusTemp.toDouble() * 9/5 + 32).roundToInt().toString()
+                val fahrenheitTempWithDegree = "$fahrenheitTemp°F"
+                temp_label!!.text = fahrenheitTempWithDegree
+                i(TAG_BLUETOOTH, "temp: $fahrenheitTemp")
+            } else {
+                val celsiusTempWithDegree = "$celsiusTemp°C"
+                temp_label.text = celsiusTempWithDegree
+            }
             if (weight < 3000) {
                 isBabyInSeat(true)
+                // TODO: only send notifications if the baby is in the seat
             }
-            i(TAG_BLUETOOTH, "temp: $farenheitTemp")
             i(TAG_BLUETOOTH, "weight: $weight")
         }
     }

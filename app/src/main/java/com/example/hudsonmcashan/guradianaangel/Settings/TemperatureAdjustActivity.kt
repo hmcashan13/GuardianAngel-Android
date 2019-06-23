@@ -13,21 +13,24 @@ import com.example.hudsonmcashan.guradianaangel.R
 import kotlinx.android.synthetic.main.activity_temperature.*
 
 class TemperatureAdjustActivity : AppCompatActivity() {
-    var prefs: Prefs? = null
-    var tempSensor: Boolean? = null
-    var farenheitCelsius: Boolean? = null
-    var maxTemp: Int? = null
+    private var prefs: Prefs? = null
+    private var tempSensor: Boolean? = null
+    private var fahrenheitCelsius: Boolean? = null
+    private var maxTemp: Int? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_temperature)
 
-        setupActionBar()
-        //setupInfoButton()
         setupPrefs()
+        setupActionBar()
         setupTemperatureSensorOnOffSwitch()
-        setupFarenheitCelsiusSwitch()
+        setupFahrenheitCelsiusSwitch()
         setupMaxTemperatureSlider()
+    }
+
+    private fun setupPrefs() {
+        prefs = Prefs(this)
     }
 
     private fun setupActionBar() {
@@ -67,37 +70,33 @@ class TemperatureAdjustActivity : AppCompatActivity() {
         }
     }
 
-    private fun setupPrefs() {
-        prefs = Prefs(this)
-    }
-
     private fun setupTemperatureSensorOnOffSwitch() {
         // Grab saved tempSensorOnOff setting
-        tempSensor = prefs?.tempSensorOnOff ?: true
+        tempSensor
         when(tempSensor) {
-            true -> tempSensorOnOff_status.text = "On"
-            false -> tempSensorOnOff_status.text = "Off"
+            true -> tempSensorOnOff_status.text = getString(R.string.on)
+            false -> tempSensorOnOff_status.text = getString(R.string.off)
         }
-        tempSensorOnOff_switch.setOnCheckedChangeListener { buttonView, isChecked ->
-            val message = if (isChecked)  "On" else "Off"
+        tempSensorOnOff_switch.setOnCheckedChangeListener { _, isChecked ->
+            val message = if (isChecked)  getString(R.string.on) else getString(R.string.off)
             // Persist tempSensorOnOff setting
-            prefs?.tempSensorOnOff = isChecked
+            prefs!!.tempSensorOnOff = isChecked
             tempSensorOnOff_status.text = message
             Toast.makeText(this@TemperatureAdjustActivity, "Temperature Sensor is now $message", Toast.LENGTH_SHORT).show()
         }
     }
 
-    private fun setupFarenheitCelsiusSwitch() {
-        // Grab saved farenheitCelsius setting
-        farenheitCelsius = prefs?.farenheitCelsius ?: true
-        when(farenheitCelsius) {
-            true -> farenheitCelsius_status.text = "°F"
-            false -> farenheitCelsius_status.text = "°C"
+    private fun setupFahrenheitCelsiusSwitch() {
+        // Grab saved fahrenheitCelsius setting
+        fahrenheitCelsius = prefs!!.fahrenheitCelsius
+        when(fahrenheitCelsius) {
+            true -> fahrenheitCelsius_status.text = "°F"
+            false -> fahrenheitCelsius_status.text = "°C"
         }
-        farenheitCelsius_switch.setOnCheckedChangeListener { buttonView, isChecked ->
-            farenheitCelsius_status.text = if (isChecked)  "°F" else "°C"
-            // Persist farenheitCelsius setting
-            prefs?.farenheitCelsius = isChecked
+        fahrenheitCelsius_switch.setOnCheckedChangeListener { _, isChecked ->
+            fahrenheitCelsius_status.text = if (isChecked)  "°F" else "°C"
+            // Persist fahrenheitCelsius setting
+            prefs!!.fahrenheitCelsius = isChecked
             if (isChecked) {
                 Toast.makeText(this@TemperatureAdjustActivity, "Murica!!!", Toast.LENGTH_SHORT).show()
             } else {
@@ -110,8 +109,8 @@ class TemperatureAdjustActivity : AppCompatActivity() {
 
     private fun setupMaxTemperatureSlider() {
         // Grab saved max temp setting
-        maxTemp = prefs?.maxTemp ?: 90
-        if (farenheitCelsius != null && farenheitCelsius as Boolean) {
+        maxTemp = prefs!!.maxTemp
+        if (fahrenheitCelsius != null && fahrenheitCelsius as Boolean) {
             maxTemp_status.text = "${maxTemp}°F"
         } else {
             val celsiusTemp = (maxTemp!! - 32) * 5/9
@@ -121,7 +120,7 @@ class TemperatureAdjustActivity : AppCompatActivity() {
         maxTemp_slider?.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {
                 val newMaxTemp = seekBar.progress + 80
-                if (farenheitCelsius != null && farenheitCelsius as Boolean) {
+                if (fahrenheitCelsius != null && fahrenheitCelsius as Boolean) {
                     maxTemp_status.text = "${newMaxTemp}°F"
                 } else {
                     val celsiusTemp = (newMaxTemp - 32) * 5/9
@@ -134,8 +133,8 @@ class TemperatureAdjustActivity : AppCompatActivity() {
             override fun onStopTrackingTouch(seekBar: SeekBar) {
                 val newMaxTemp = seekBar.progress + 80
                 // Persist max temp setting
-                prefs?.maxTemp = newMaxTemp
-                if (farenheitCelsius != null && farenheitCelsius as Boolean) {
+                prefs!!.maxTemp = newMaxTemp
+                if (fahrenheitCelsius != null && fahrenheitCelsius as Boolean) {
                     Toast.makeText(this@TemperatureAdjustActivity, "Max Temperature is now $newMaxTemp°F", Toast.LENGTH_SHORT).show()
                 } else {
                     val celsiusTemp = (newMaxTemp - 32) * 5/9

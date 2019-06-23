@@ -4,4 +4,6 @@
     <string name="veryClose">Very Close</string>
     <string name="near">Near</string>
     <string name="far">Far</string>
+    <string name="on">On</string>
+    <string name="off">Off</string>
 </resources>
