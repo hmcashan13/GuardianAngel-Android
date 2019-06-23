@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">Guradian Angel</string>
+    <string name="notConnected">Not Connected</string>
+    <string name="veryClose">Very Close</string>
+    <string name="near">Near</string>
+    <string name="far">Far</string>
 </resources>

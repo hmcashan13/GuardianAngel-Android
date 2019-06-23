@@ -12,6 +12,7 @@ import android.util.Log
 import java.util.*
 import android.os.IBinder
 import android.bluetooth.BluetoothGattDescriptor
+import android.util.Log.*
 
 @TargetApi(23)
 class BluetoothLeService : Service() {
@@ -28,24 +29,25 @@ class BluetoothLeService : Service() {
             val intentAction: String
             when (newState) {
                 BluetoothProfile.STATE_CONNECTED -> {
+                    i(TAG_BLUETOOTH, "Attempting to Connect")
                     intentAction = ACTION_GATT_CONNECTED
                     connectionState = BluetoothAdapter.STATE_CONNECTED
                     broadcastUpdate(intentAction)
-                    val services = mBluetoothGatt?.discoverServices()
-                    Log.i(TAG_BLUETOOTH, "Connected to GATT server.")
-                    Log.i(TAG_BLUETOOTH, "Attempting to start service discovery: $services")
+                    val services = mBluetoothGatt!!.discoverServices()
+                    i(TAG_BLUETOOTH, "Connected to GATT server.")
+                    i(TAG_BLUETOOTH, "Attempting to start service discovery: $services")
                 }
                 BluetoothProfile.STATE_DISCONNECTED -> {
                     intentAction = ACTION_GATT_DISCONNECTED
                     connectionState = BluetoothAdapter.STATE_DISCONNECTED
-                    Log.i(TAG_BLUETOOTH, "Disconnected from GATT server.")
+                    i(TAG_BLUETOOTH, "Disconnected from GATT server.")
                     broadcastUpdate(intentAction)
                 }
             }
         }
 
         override fun onServicesDiscovered(gatt: BluetoothGatt, status: Int) {
-            Log.d(TAG_BLUETOOTH, "Services discovered")
+            d(TAG_BLUETOOTH, "Services discovered")
             val service = mBluetoothGatt!!.getService(UUID_SERVICE_UART)
             val characteristicTx = service.getCharacteristic(UUID_CHARACT_TX)
 
@@ -101,18 +103,18 @@ class BluetoothLeService : Service() {
     fun initialize(): Boolean {
         // For API level 18 and above, get a reference to BluetoothAdapter through
         // BluetoothManager.
-        Log.d(TAG_BLUETOOTH, "Initializing bluetooth")
+        d(TAG_BLUETOOTH, "Initializing bluetooth")
         if (mBluetoothManager == null) {
             mBluetoothManager = getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
             if (mBluetoothManager == null) {
-                Log.e(TAG_BLUETOOTH, "Unable to initialize BluetoothManager.")
+                e(TAG_BLUETOOTH, "Unable to initialize BluetoothManager.")
                 return false
             }
         }
 
         mBluetoothAdapter = mBluetoothManager!!.adapter
         if (mBluetoothAdapter == null) {
-            Log.e(TAG_BLUETOOTH, "Unable to obtain a BluetoothAdapter.")
+            e(TAG_BLUETOOTH, "Unable to obtain a BluetoothAdapter.")
             return false
         }
 
@@ -129,33 +131,33 @@ class BluetoothLeService : Service() {
      * *         `BluetoothGattCallback#onConnectionStateChange(android.bluetooth.BluetoothGatt, int, int)`
      * *         callback.
      */
-    fun connect(address: String?): Boolean {
+    fun connectUART(address: String?): Boolean {
         if (mBluetoothAdapter == null || address == null) {
-            Log.w(TAG_BLUETOOTH, "BluetoothAdapter not initialized or unspecified address.")
+            w(TAG_BLUETOOTH, "BluetoothAdapter not initialized or unspecified address.")
             return false
         }
 
         // Previously connected device.  Try to reconnect.
         if (mBluetoothDeviceAddress != null && address == mBluetoothDeviceAddress
                 && mBluetoothGatt != null) {
-            Log.d(TAG_BLUETOOTH, "Trying to use an existing mBluetoothGatt for connection.")
-            if (mBluetoothGatt!!.connect()) {
-                mConnectionState = STATE_CONNECTING
-                return true
-            } else {
-                return false
+            d(TAG_BLUETOOTH, "Trying to use an existing mBluetoothGatt for connection.")
+            return when {
+                mBluetoothGatt!!.connect() -> {
+                    mConnectionState = STATE_CONNECTING
+                    true
+                }
+                else -> false
             }
         }
 
         val device = mBluetoothAdapter!!.getRemoteDevice(address)
         if (device == null) {
-            Log.w(TAG_BLUETOOTH, "Device not found.  Unable to connect.")
+            w(TAG_BLUETOOTH, "Device not found.  Unable to connect.")
             return false
         }
-        // We want to directly connect to the device, so we are setting the autoConnect
-        // parameter to false.
+        // We want to directly connect to the device, so we are setting the autoConnect parameter to false.
         mBluetoothGatt = device.connectGatt(this@BluetoothLeService, false, mGattCallback)
-        Log.d(TAG_BLUETOOTH, "Trying to create a new connection.")
+        d(TAG_BLUETOOTH, "Trying to create a new connection.")
         mBluetoothDeviceAddress = address
         mConnectionState = STATE_CONNECTING
         return true
@@ -169,7 +171,7 @@ class BluetoothLeService : Service() {
      */
     fun disconnect() {
         if (mBluetoothAdapter == null || mBluetoothGatt == null) {
-            Log.w(TAG_BLUETOOTH, "BluetoothAdapter not initialized")
+            w(TAG_BLUETOOTH, "BluetoothAdapter not initialized")
             return
         }
         mBluetoothGatt!!.disconnect()
@@ -192,7 +194,7 @@ class BluetoothLeService : Service() {
      */
     fun readCharacteristic(characteristic: BluetoothGattCharacteristic): Boolean {
         if (mBluetoothAdapter == null || mBluetoothGatt == null) {
-            Log.w(TAG_BLUETOOTH, "BluetoothAdapter not initialized")
+            w(TAG_BLUETOOTH, "BluetoothAdapter not initialized")
             return false
         }
         return mBluetoothGatt!!.readCharacteristic(characteristic)
@@ -207,7 +209,7 @@ class BluetoothLeService : Service() {
     fun setCharacteristicNotification(characteristic: BluetoothGattCharacteristic,
                                       enabled: Boolean) {
         if (mBluetoothAdapter == null || mBluetoothGatt == null) {
-            Log.w(TAG_BLUETOOTH, "BluetoothAdapter not initialized")
+            w(TAG_BLUETOOTH, "BluetoothAdapter not initialized")
             return
         }
         mBluetoothGatt!!.setCharacteristicNotification(characteristic, enabled)
