@@ -17,11 +17,17 @@ class SettingsActivity : AppCompatActivity() {
     }
 
     private fun setupActionBar() {
+        setSupportActionBar(findViewById(R.id.settings_toolbar))
         val actionBar = supportActionBar
         actionBar!!.title = "Settings"
         // Setup back button
         actionBar.setDisplayHomeAsUpEnabled(true)
         actionBar.setDisplayHomeAsUpEnabled(true)
+    }
+
+    override fun onSupportNavigateUp(): Boolean {
+        onBackPressed()
+        return true
     }
 
     private fun setupListView() {
@@ -38,8 +44,5 @@ class SettingsActivity : AppCompatActivity() {
         }
     }
 
-    override fun onSupportNavigateUp(): Boolean {
-        onBackPressed()
-        return true
-    }
+
 }

@@ -23,6 +23,8 @@ import org.jetbrains.anko.toast
 import android.bluetooth.BluetoothAdapter
 import android.content.*
 import android.os.IBinder
+import android.text.Layout
+import android.view.MenuItem
 import com.example.hudsonmcashan.guradianaangel.Settings.SettingsActivity
 import kotlin.math.roundToInt
 
@@ -47,7 +49,10 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
     lateinit var bleScanCallback: BluetoothAdapter.LeScanCallback
     private var mDeviceAddress: String? = null
     private var mBluetoothLeService: BluetoothLeService? = null
-    private var mConnected = false
+    private val STATE_DISCONNECTED = 0
+    private val STATE_CONNECTING = 1
+    private val STATE_CONNECTED = 2
+    private var mConnectionState = STATE_DISCONNECTED
     val ENABLE_BT_REQUEST_CODE = 1
     var isBabyInSeat: Boolean = false
 
@@ -55,6 +60,7 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_connection)
 
+        setupActionBar()
         setupInfoButton()
         setupSettingsButton()
         setupBeacon()
@@ -77,15 +83,39 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
         unregisterReceiver(mGattUpdateReceiver)
     }
 
+
+
+    private fun setupActionBar() {
+        setSupportActionBar(findViewById(R.id.device_toolbar))
+        setActionBarTitle(mConnectionState)
+    }
+
+    private fun setActionBarTitle(state: Int) {
+        val actionBar = supportActionBar
+        when(state) {
+            0 -> actionBar!!.title = "Disconnected"
+            1 -> actionBar!!.title = "Connecting"
+            2 -> actionBar!!.title = "Connected"
+        }
+    }
+
     private fun setupInfoButton() {
         info_device_button.setOnClickListener {
-
+            val infoButton = findViewById<Button>(R.id.info_device_button)
+            infoButton.setOnClickListener {
+                val intent = Intent(this, InfoDeviceActivity::class.java)
+                startActivity(intent)
+            }
         }
     }
 
     private fun setupSettingsButton() {
         settings_button.setOnClickListener {
-            launchSettings()
+            val settingsButton = findViewById<Button>(R.id.settings_button)
+            settingsButton.setOnClickListener {
+                val intent = Intent(this, SettingsActivity::class.java)
+                startActivity(intent)
+            }
         }
     }
 
@@ -127,12 +157,13 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
             } else {
                 // Bluetooth is enabled
                 startScan()
+                mConnectionState = STATE_CONNECTING
+                setActionBarTitle(mConnectionState)
                 Intent(this@DeviceActivity, BluetoothLeService::class.java).also {
                     bindService(it, mServiceConnection, Context.BIND_AUTO_CREATE)
                 }
                 Log.i(TAG_BLUETOOTH, "UART setup")
             }
-
         }
     }
 
@@ -210,29 +241,6 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
         } else {
             notificationManager.notify(1, builder.build())
         }
-    }
-
-    // Settings
-    private fun launchInfo() {
-        // launch the settings activity
-        val infoButton = findViewById<Button>(R.id.info_device_button)
-        infoButton.setOnClickListener {
-            val intent = Intent(this, SettingsActivity::class.java)
-            startActivity(intent)
-        }
-
-    }
-
-
-    // Settings
-    private fun launchSettings() {
-        // launch the settings activity
-        val settingsButton = findViewById<Button>(R.id.settings_button)
-        settingsButton.setOnClickListener {
-            val intent = Intent(this, SettingsActivity::class.java)
-            startActivity(intent)
-        }
-
     }
 
     private fun isBabyInSeat(isInSeat: Boolean) {
@@ -334,12 +342,13 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
         override fun onReceive(context: Context, intent: Intent) {
             val action = intent.action
             if (BluetoothLeService.ACTION_GATT_CONNECTED == action) {
-                mConnected = true
-                //updateConnectionState(R.string.connected)
+                mConnectionState = STATE_CONNECTED
+                setActionBarTitle(mConnectionState)
             } else if (BluetoothLeService.ACTION_GATT_DISCONNECTED == action) {
-                mConnected = false
-                //updateConnectionState(R.string.disconnected)
-                //clearUI()
+                mConnectionState = STATE_DISCONNECTED
+                setActionBarTitle(mConnectionState)
+                temp_label.text = "Not Connected"
+                beacon_label.text = "Not Connected"
             } else if (BluetoothLeService.ACTION_DATA_AVAILABLE == action) {
                 displayData(intent.getStringExtra(BluetoothLeService.EXTRA_DATA))
             }

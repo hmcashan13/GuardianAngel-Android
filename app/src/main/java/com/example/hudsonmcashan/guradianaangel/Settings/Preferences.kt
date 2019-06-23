@@ -16,10 +16,10 @@ class Prefs (context: Context) {
         set(value) = prefs.edit().putBoolean(TEMP_SENSOR_ON_OFF, value).apply()
 
     var farenheitCelsius: Boolean
-        get() = prefs.getBoolean(TEMP_SENSOR_ON_OFF,true)
+        get() = prefs.getBoolean(FARENHEIT_CELSIUS,true)
         set(value) = prefs.edit().putBoolean(FARENHEIT_CELSIUS, value).apply()
 
     var maxTemp: Int
-        get() = prefs.getInt(TEMP_SENSOR_ON_OFF,90)
+        get() = prefs.getInt(MAX_TEMP,90)
         set(value) = prefs.edit().putInt(MAX_TEMP, value).apply()
 }

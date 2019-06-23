@@ -1,9 +1,14 @@
 package com.example.hudsonmcashan.guradianaangel.Settings
 
+import android.content.Intent
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
+import android.view.Menu
+import android.view.MenuItem
+import android.widget.Button
 import android.widget.SeekBar
 import android.widget.Toast
+import com.example.hudsonmcashan.guradianaangel.InfoDeviceActivity
 import com.example.hudsonmcashan.guradianaangel.R
 import kotlinx.android.synthetic.main.activity_temperature.*
 
@@ -18,6 +23,7 @@ class TemperatureAdjustActivity : AppCompatActivity() {
         setContentView(R.layout.activity_temperature)
 
         setupActionBar()
+        //setupInfoButton()
         setupPrefs()
         setupTemperatureSensorOnOffSwitch()
         setupFarenheitCelsiusSwitch()
@@ -25,6 +31,7 @@ class TemperatureAdjustActivity : AppCompatActivity() {
     }
 
     private fun setupActionBar() {
+        setSupportActionBar(findViewById(R.id.temp_toolbar))
         val actionBar = supportActionBar
         actionBar!!.title = "Adjust Temperature Sensor"
         // Setup back button
@@ -36,6 +43,28 @@ class TemperatureAdjustActivity : AppCompatActivity() {
     override fun onSupportNavigateUp(): Boolean {
         onBackPressed()
         return true
+    }
+
+    // Sets up the action bar
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.device_action_bar, menu)
+        return super.onCreateOptionsMenu(menu)
+    }
+
+    // Handles action bar events
+    override fun onOptionsItemSelected(item: MenuItem) = when (item.itemId) {
+        R.id.action_info -> {
+            // launch the settings activity
+            val intent = Intent(this, InfoTempActivity::class.java)
+            startActivity(intent)
+            true
+        }
+
+        else -> {
+            // If we got here, the user's action was not recognized.
+            // Invoke the superclass to handle it.
+            super.onOptionsItemSelected(item)
+        }
     }
 
     private fun setupPrefs() {
