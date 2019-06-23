@@ -22,7 +22,9 @@ import android.widget.Toast
 import org.jetbrains.anko.toast
 import android.bluetooth.BluetoothAdapter
 import android.content.*
+import android.media.audiofx.BassBoost
 import android.os.IBinder
+import android.provider.Settings
 import android.text.Layout
 import android.view.MenuItem
 import com.example.hudsonmcashan.guradianaangel.Settings.SettingsActivity
@@ -32,7 +34,15 @@ import kotlin.math.roundToInt
 const val TAG_BEACON = "BeaconDeviceActivity"
 const val TAG_BLUETOOTH = "BluetoothDeviceActivity"
 
-@TargetApi(21)
+val STATE_DISCONNECTED = 0
+val STATE_CONNECTING = 1
+val STATE_CONNECTED = 2
+var mConnectionState = STATE_DISCONNECTED
+
+val appIdentifier = "com.example.hudsonmcashan.guradianaangel"
+val appTitle = "Guardian Angel"
+
+@TargetApi(23)
 class DeviceActivity : AppCompatActivity(), BeaconConsumer {
     // Notification properties
     private val outOfRegionNotificationDescription = "Your too far away from your baby"
@@ -49,10 +59,6 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
     lateinit var bleScanCallback: BluetoothAdapter.LeScanCallback
     private var mDeviceAddress: String? = null
     private var mBluetoothLeService: BluetoothLeService? = null
-    private val STATE_DISCONNECTED = 0
-    private val STATE_CONNECTING = 1
-    private val STATE_CONNECTED = 2
-    private var mConnectionState = STATE_DISCONNECTED
     val ENABLE_BT_REQUEST_CODE = 1
     var isBabyInSeat: Boolean = false
 
@@ -61,6 +67,7 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
         setContentView(R.layout.activity_connection)
 
         setupActionBar()
+        setupWriteSettings()
         setupInfoButton()
         setupSettingsButton()
         setupBeacon()
@@ -70,6 +77,7 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
     override fun onResume() {
         super.onResume()
         registerReceiver(mGattUpdateReceiver, makeGattUpdateIntentFilter())
+        if (mConnectionState == STATE_DISCONNECTED) { startScan() }
     }
 
     override fun onDestroy() {
@@ -96,6 +104,13 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
             0 -> actionBar!!.title = "Disconnected"
             1 -> actionBar!!.title = "Connecting"
             2 -> actionBar!!.title = "Connected"
+        }
+    }
+
+    private fun setupWriteSettings() {
+        val canWrite = Settings.System.canWrite(this)
+        if (!canWrite) {
+            Settings.ACTION_MANAGE_WRITE_SETTINGS
         }
     }
 
@@ -129,7 +144,7 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
         my_region = Region("my_beacon_region", id1, id2, id3)
         beaconManager.getBeaconParsers().add(BeaconParser().setBeaconLayout("m:2-3=0215,i:4-19,i:20-21,i:22-23,p:24-24"))
         beaconManager.bind(this)
-        //  Setup location permissions
+        //  Setup location permissions (API 23 and greater)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if (this.checkSelfPermission(android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                 val builder = AlertDialog.Builder(this)
@@ -140,6 +155,8 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
                 builder.show()
             }
         }
+        //TODO: Error message that the app isn't compatible with the phone
+
     }
 
     private fun setupUART() {
@@ -210,25 +227,23 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
         val notificationManager: NotificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         lateinit var notificationChannel: NotificationChannel
         lateinit var builder: Notification.Builder
-        val channelId = "com.example.hudsonmcashan.guradianaangel"
-        val title = "Guardian Angel"
         val intent = Intent(this, DeviceActivity::class.java)
         val pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT)
 
         val contentView = RemoteViews(packageName, R.layout.notification_layout)
-        contentView.setTextViewText(R.id.notification_title, title)
+        contentView.setTextViewText(R.id.notification_title, appTitle)
         contentView.setTextViewText(R.id.notification_content, description)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            notificationChannel = NotificationChannel(channelId, description, NotificationManager.IMPORTANCE_HIGH)
+            notificationChannel = NotificationChannel(appIdentifier, description, NotificationManager.IMPORTANCE_HIGH)
             notificationChannel.enableLights(true)
             notificationChannel.lightColor = Color.MAGENTA
             notificationChannel.enableVibration(true)
             notificationManager.createNotificationChannel(notificationChannel)
 
-            builder = Notification.Builder(this, channelId)
+            builder = Notification.Builder(this, appIdentifier)
                     .setSmallIcon(R.drawable.ic_launcher_round)
                     .setContentIntent(pendingIntent)
-                    .setChannelId(channelId)
+                    .setChannelId(appIdentifier)
                     .setAutoCancel(true)
         } else {
             builder = Notification.Builder(this)
@@ -236,11 +251,8 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
                     .setLargeIcon(BitmapFactory.decodeResource(this.resources, R.drawable.angel_wings_app_icon))
                     .setContentIntent(pendingIntent)
         }
-        if (Build.VERSION.SDK_INT < 16) {
-            notificationManager.notify(1, builder.notification)
-        } else {
-            notificationManager.notify(1, builder.build())
-        }
+
+        notificationManager.notify(1, builder.build())
     }
 
     private fun isBabyInSeat(isInSeat: Boolean) {
@@ -259,12 +271,15 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
                 val distance = beacon.distance.toInt()
                 Log.i(TAG_BEACON, "beacon distance: $distance")
 
-                when(distance){
-                    in Int.MIN_VALUE until 0 -> beacon_label.text = "Not Connected"
-                    in 0..5 -> beacon_label.text = "Very Close"
-                    in 5..10 -> beacon_label.text = "Near"
-                    else -> beacon_label.text = "Far"
+                if (mConnectionState != STATE_DISCONNECTED) {
+                    when(distance){
+                        in Int.MIN_VALUE until 0 -> beacon_label.text = "Not Connected"
+                        in 0..5 -> beacon_label.text = "Very Close"
+                        in 5..10 -> beacon_label.text = "Near"
+                        else -> beacon_label.text = "Far"
+                    }
                 }
+
             }
         }
 
@@ -277,12 +292,12 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
         beaconManager.addMonitorNotifier(object : MonitorNotifier {
             override fun didEnterRegion(region: Region) {
                 Log.i(TAG_BEACON, "Hola")
+                if (mConnectionState == STATE_DISCONNECTED) { startScan() }
             }
 
             override fun didExitRegion(region: Region) {
                 Log.i(TAG_BEACON, "Adios")
                 beacon_label.text = "Not Connected"
-                //sendNotification(outOfRegionNotificationDescription)
             }
 
             override fun didDetermineStateForRegion(state: Int, region: Region) {
@@ -299,6 +314,7 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
 
     }
 
+    // Initiates Bluetooth pairing process
     private fun startScan() {
         if (bluetoothAdapter.isEnabled) {
             bleScanner = bluetoothAdapter.bluetoothLeScanner
@@ -311,22 +327,19 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
         }
     }
     private fun stopScan() {
-        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.KITKAT) {
-            bluetoothAdapter.bluetoothLeScanner.stopScan(scanCallback)
-        } else {
-            bluetoothAdapter.stopLeScan(bleScanCallback)
-        }
+        bluetoothAdapter.bluetoothLeScanner.stopScan(scanCallback)
     }
 
     val scanCallback = object: ScanCallback() {
         override fun onScanResult(callbackType: Int, result: ScanResult) {
+            Log.i(TAG_BLUETOOTH, "Scanning...")
             if("NORDIC_USART" == result.device.name) {
                 mDeviceAddress = result.device.address
                 Log.i(TAG_BLUETOOTH, "Connecting to Guardian Angel: $mDeviceAddress")
                 stopScan()
                 if (mBluetoothLeService != null) {
-                    val result = mBluetoothLeService!!.connect(mDeviceAddress)
-                    Log.d(TAG_BLUETOOTH, "Connect request result=" + result)
+                    val connectionResut = mBluetoothLeService!!.connect(mDeviceAddress)
+                    Log.d(TAG_BLUETOOTH, "Connect request result=$connectionResut")
                 }
             }
             super.onScanResult(callbackType, result)
@@ -340,17 +353,17 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
     //                        or notification operations.
     private val mGattUpdateReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
-            val action = intent.action
-            if (BluetoothLeService.ACTION_GATT_CONNECTED == action) {
-                mConnectionState = STATE_CONNECTED
-                setActionBarTitle(mConnectionState)
-            } else if (BluetoothLeService.ACTION_GATT_DISCONNECTED == action) {
-                mConnectionState = STATE_DISCONNECTED
-                setActionBarTitle(mConnectionState)
-                temp_label.text = "Not Connected"
-                beacon_label.text = "Not Connected"
-            } else if (BluetoothLeService.ACTION_DATA_AVAILABLE == action) {
-                displayData(intent.getStringExtra(BluetoothLeService.EXTRA_DATA))
+            when (intent.action){
+                BluetoothLeService.ACTION_GATT_CONNECTED -> {
+                    setActionBarTitle(mConnectionState)
+                }
+                BluetoothLeService.ACTION_GATT_DISCONNECTED -> {
+                    mConnectionState = STATE_DISCONNECTED
+                    setActionBarTitle(mConnectionState)
+                    temp_label.text = "Not Connected"
+                    beacon_label.text = "Not Connected"
+                }
+                BluetoothLeService.ACTION_DATA_AVAILABLE -> displayData(intent.getStringExtra(BluetoothLeService.EXTRA_DATA))
             }
         }
     }

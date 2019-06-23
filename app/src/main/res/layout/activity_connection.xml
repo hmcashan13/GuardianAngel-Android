@@ -46,7 +46,7 @@
         android:layout_height="29dp"
         android:layout_marginTop="20dp"
         android:background="@drawable/rounded_button2"
-        android:text="  Baby in seat?"
+        android:text="  Device Active?"
         android:textAppearance="@style/TextAppearance.AppCompat.Caption"
         android:textColor="@android:color/holo_purple"
         android:textColorLink="@color/colorPrimary"
@@ -54,7 +54,7 @@
         app:layout_constraintEnd_toEndOf="@+id/beacon_text"
         app:layout_constraintStart_toStartOf="@+id/beacon_text"
         app:layout_constraintTop_toBottomOf="@+id/beacon_text"
-        tools:text="  Baby in seat?" />
+        tools:text="  Device Active?" />
 
     <Button
         android:id="@+id/settings_button"

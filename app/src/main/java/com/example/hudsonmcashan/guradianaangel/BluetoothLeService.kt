@@ -13,9 +13,7 @@ import java.util.*
 import android.os.IBinder
 import android.bluetooth.BluetoothGattDescriptor
 
-
-
-@TargetApi(21)
+@TargetApi(23)
 class BluetoothLeService : Service() {
 
     private var connectionState = STATE_DISCONNECTED
@@ -24,7 +22,6 @@ class BluetoothLeService : Service() {
     private var mBluetoothAdapter: BluetoothAdapter? = null
     private var mBluetoothDeviceAddress: String? = null
     private var mBluetoothGatt: BluetoothGatt? = null
-    private var mConnectionState = STATE_DISCONNECTED
 
     val mGattCallback = object : BluetoothGattCallback() {
         override fun onConnectionStateChange(gatt: BluetoothGatt, status: Int, newState: Int) {
@@ -234,15 +231,11 @@ class BluetoothLeService : Service() {
         }
 
     companion object {
-
         val UART_UUID = UUID.fromString("8519BF04-6C36-4B4A-4182-A2764CE2E05A")
         val UUID_SERVICE_UART = UUID.fromString("6E400001-B5A3-F393-E0A9-E50E24DCCA9E")
         val UUID_CHARACT_RX   = UUID.fromString("6E400002-B5A3-F393-E0A9-E50E24DCCA9E")
         val UUID_CHARACT_TX   = UUID.fromString("6E400003-B5A3-F393-E0A9-E50E24DCCA9E")
         val UUID_DESCRIPTOR = UUID.fromString("00002902-0000-1000-8000-00805f9b34fb")
-        private val STATE_DISCONNECTED = 0
-        private val STATE_CONNECTING = 1
-        private val STATE_CONNECTED = 2
         val ACTION_GATT_CONNECTED = "com.example.hudsonmcashan.guardianangel.ACTION_GATT_CONNECTED"
         val ACTION_GATT_DISCONNECTED = "com.example.hudsonmcashan.guardianangel.ACTION_GATT_DISCONNECTED"
         val ACTION_GATT_SERVICES_DISCOVERED =
