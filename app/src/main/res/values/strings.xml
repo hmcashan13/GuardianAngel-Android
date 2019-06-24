@@ -6,4 +6,10 @@
     <string name="far">Far</string>
     <string name="on">On</string>
     <string name="off">Off</string>
+    <string name="fahrenheitDegree">°F</string>
+    <string name="celsiusDegree">°C</string>
+    <string name="connecting">Connecting</string>
+    <string name="connected">Connected</string>
+    <string name="tempSensorOff">Temperature Sensor is turned off</string>
+    <string name="uartName">NORDIC_USART</string>
 </resources>

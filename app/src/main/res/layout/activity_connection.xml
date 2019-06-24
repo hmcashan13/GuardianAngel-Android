@@ -13,7 +13,6 @@
         android:layout_height="29dp"
         android:layout_marginStart="24dp"
         android:layout_marginLeft="24dp"
-        android:layout_marginTop="32dp"
         android:layout_marginEnd="24dp"
         android:layout_marginRight="24dp"
         android:background="@drawable/rounded_button2"
@@ -31,14 +30,14 @@
         android:layout_height="29dp"
         android:layout_marginTop="20dp"
         android:background="@drawable/rounded_button2"
-        android:text="  Proximity from baby:"
+        android:text="  Proximity from cushion:"
         android:textColor="@android:color/holo_purple"
         android:textSize="18sp"
         app:layout_constraintEnd_toEndOf="@+id/temp_text"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="@+id/temp_text"
         app:layout_constraintTop_toBottomOf="@+id/temp_text"
-        tools:text="  Proximity from baby :" />
+        tools:text="  Proximity from cushion:" />
 
     <TextView
         android:id="@+id/baby_in_seat_text"
@@ -71,8 +70,8 @@
 
     <ImageView
         android:id="@+id/connection_logo"
-        android:layout_width="220dp"
-        android:layout_height="134dp"
+        android:layout_width="279dp"
+        android:layout_height="207dp"
         android:layout_marginStart="8dp"
         android:layout_marginLeft="8dp"
         android:layout_marginTop="8dp"
@@ -152,5 +151,27 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:popupTheme="@style/ThemeOverlay.AppCompat.Light" />
+
+    <ProgressBar
+        android:id="@+id/beacon_progressBar"
+        style="?android:attr/progressBarStyle"
+        android:layout_width="36dp"
+        android:layout_height="0dp"
+        android:layout_marginEnd="4dp"
+        android:layout_marginRight="4dp"
+        app:layout_constraintBottom_toBottomOf="@+id/beacon_text"
+        app:layout_constraintEnd_toEndOf="@+id/beacon_text"
+        app:layout_constraintTop_toTopOf="@+id/beacon_text" />
+
+    <ProgressBar
+        android:id="@+id/temp_progressBar"
+        style="?android:attr/progressBarStyle"
+        android:layout_width="36dp"
+        android:layout_height="0dp"
+        android:layout_marginEnd="4dp"
+        android:layout_marginRight="4dp"
+        app:layout_constraintBottom_toBottomOf="@+id/temp_text"
+        app:layout_constraintEnd_toEndOf="@+id/temp_text"
+        app:layout_constraintTop_toBottomOf="@+id/connection_logo" />
 
 </android.support.constraint.ConstraintLayout>

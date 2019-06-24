@@ -9,7 +9,7 @@
         android:layout_width="64dp"
         android:layout_height="64dp"
         android:padding="10dp"
-        android:src="@mipmap/new_ic_launcher_round"
+        android:src="@mipmap/notification_icon_round"
         android:contentDescription="TODO" />
 
     <LinearLayout
