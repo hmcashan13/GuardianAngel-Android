@@ -5,7 +5,7 @@
     android:id="@+id/fahrenheitCelsius_text"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@android:color/holo_purple">
+    android:background="@color/colorPrimary">
 
     <TextView
         android:id="@+id/tempSensorOnOff_label"
@@ -19,7 +19,7 @@
         android:background="@drawable/rounded_button2"
         android:text="  Temperature Sensor On/Off:"
         android:textAppearance="@style/TextAppearance.AppCompat.Caption"
-        android:textColor="@android:color/holo_purple"
+        android:textColor="@color/colorAccent"
         android:textColorLink="@color/colorPrimary"
         android:textSize="18sp"
         app:layout_constraintEnd_toEndOf="parent"
@@ -35,7 +35,7 @@
         android:background="@drawable/rounded_button2"
         android:text="  Fahrenheit or Celsius:"
         android:textAppearance="@style/TextAppearance.AppCompat.Caption"
-        android:textColor="@android:color/holo_purple"
+        android:textColor="@color/colorAccent"
         android:textColorLink="@color/colorPrimary"
         android:textSize="18sp"
         app:layout_constraintEnd_toEndOf="@+id/tempSensorOnOff_label"
@@ -51,7 +51,7 @@
         android:background="@drawable/rounded_button2"
         android:text="  Max Temperature:"
         android:textAppearance="@style/TextAppearance.AppCompat.Caption"
-        android:textColor="@android:color/holo_purple"
+        android:textColor="@color/colorAccent"
         android:textColorLink="@color/colorPrimary"
         android:textSize="18sp"
         app:layout_constraintEnd_toEndOf="@+id/celsiusFahrenheit_label"
@@ -68,7 +68,7 @@
         android:layout_marginRight="16dp"
         android:layout_marginBottom="3dp"
         android:text="TextView"
-        android:textColor="@android:color/holo_purple"
+        android:textColor="@color/colorAccent"
         android:textSize="18sp"
         app:layout_constraintBottom_toBottomOf="@+id/maxTemp_label"
         app:layout_constraintEnd_toEndOf="@+id/maxTemp_label"
@@ -104,7 +104,7 @@
         android:layout_marginEnd="8dp"
         android:layout_marginRight="8dp"
         android:text="TextView"
-        android:textColor="@android:color/holo_purple"
+        android:textColor="@color/colorAccent"
         app:layout_constraintBottom_toBottomOf="@+id/tempSensorOnOff_label"
         app:layout_constraintEnd_toStartOf="@+id/tempSensorOnOff_switch"
         app:layout_constraintTop_toTopOf="@+id/tempSensorOnOff_label" />
@@ -127,8 +127,8 @@
         android:layout_height="wrap_content"
         android:layout_marginEnd="8dp"
         android:layout_marginRight="8dp"
-        android:textColor="@android:color/holo_purple"
         android:text="TextView"
+        android:textColor="@color/colorAccent"
         app:layout_constraintBottom_toBottomOf="@+id/celsiusFahrenheit_label"
         app:layout_constraintEnd_toStartOf="@+id/fahrenheitCelsius_switch"
         app:layout_constraintTop_toTopOf="@+id/celsiusFahrenheit_label"
@@ -139,12 +139,13 @@
         android:id="@+id/temp_toolbar"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
-        android:background="#9C27B0"
+        android:background="@color/colorAccent"
         android:elevation="4dp"
         android:theme="@style/ThemeOverlay.AppCompat.ActionBar"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:popupTheme="@style/ThemeOverlay.AppCompat.Light" tools:targetApi="lollipop"/>
+        app:popupTheme="@style/ThemeOverlay.AppCompat.Light"
+        tools:targetApi="lollipop" />
 
 </android.support.constraint.ConstraintLayout>

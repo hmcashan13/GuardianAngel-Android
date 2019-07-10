@@ -25,6 +25,7 @@ import android.provider.Settings
 import android.support.v4.app.NotificationCompat
 import android.util.Log.*
 import android.view.View
+import android.widget.RelativeLayout
 import com.example.hudsonmcashan.guradianaangel.Settings.Prefs
 import com.example.hudsonmcashan.guradianaangel.Settings.SettingsActivity
 import com.example.hudsonmcashan.guradianaangel.Settings.TAG_SETTINGS
@@ -77,6 +78,7 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         setContentView(R.layout.activity_connection)
 
         prefs = Prefs(this)

@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@android:color/holo_purple">
+    android:background="@color/colorPrimary">
 
 
     <TextView
@@ -18,7 +18,7 @@
         android:layout_marginRight="24dp"
         android:background="@drawable/rounded_button2"
         android:text="  Temperature:"
-        android:textColor="@android:color/holo_purple"
+        android:textColor="@color/colorAccent"
         android:textSize="18sp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -32,7 +32,7 @@
         android:layout_marginTop="20dp"
         android:background="@drawable/rounded_button2"
         android:text="  Proximity from cushion:"
-        android:textColor="@android:color/holo_purple"
+        android:textColor="@color/colorAccent"
         android:textSize="18sp"
         app:layout_constraintEnd_toEndOf="@+id/temp_text"
         app:layout_constraintHorizontal_bias="0.0"
@@ -48,7 +48,7 @@
         android:background="@drawable/rounded_button2"
         android:text="  Device Active?"
         android:textAppearance="@style/TextAppearance.AppCompat.Caption"
-        android:textColor="@android:color/holo_purple"
+        android:textColor="@color/colorAccent"
         android:textColorLink="@color/colorPrimary"
         android:textSize="18sp"
         app:layout_constraintEnd_toEndOf="@+id/beacon_text"
@@ -65,7 +65,7 @@
         android:layout_marginRight="8dp"
         android:background="@drawable/rounded_button"
         android:text="Settings"
-        android:textColor="@android:color/white"
+        android:textColor="@color/white"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/device_toolbar" />
 
@@ -145,7 +145,7 @@
         android:id="@+id/device_toolbar"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
-        android:background="#9227B0"
+        android:background="@color/colorAccent"
         android:elevation="4dp"
         android:theme="@style/ThemeOverlay.AppCompat.ActionBar"
         app:layout_constraintEnd_toEndOf="parent"
@@ -153,16 +153,6 @@
         app:layout_constraintTop_toTopOf="parent"
         app:popupTheme="@style/ThemeOverlay.AppCompat.Light" />
 
-    <ProgressBar
-        android:id="@+id/beacon_progressBar"
-        style="?android:attr/progressBarStyle"
-        android:layout_width="36dp"
-        android:layout_height="0dp"
-        android:layout_marginEnd="4dp"
-        android:layout_marginRight="4dp"
-        app:layout_constraintBottom_toBottomOf="@+id/beacon_text"
-        app:layout_constraintEnd_toEndOf="@+id/beacon_text"
-        app:layout_constraintTop_toTopOf="@+id/beacon_text" />
 
     <ProgressBar
         android:id="@+id/temp_progressBar"
@@ -174,5 +164,28 @@
         app:layout_constraintBottom_toBottomOf="@+id/temp_text"
         app:layout_constraintEnd_toEndOf="@+id/temp_text"
         app:layout_constraintTop_toTopOf="@+id/temp_text" />
+
+    <ProgressBar
+        android:id="@+id/beacon_progressBar"
+        style="?android:attr/progressBarStyle"
+        android:layout_width="36dp"
+        android:layout_height="0dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginRight="8dp"
+        app:layout_constraintBottom_toBottomOf="@+id/beacon_text"
+        app:layout_constraintEnd_toEndOf="@+id/beacon_text"
+        app:layout_constraintTop_toTopOf="@+id/beacon_text"
+        app:layout_constraintVertical_bias="1.0" />
+
+    <ProgressBar
+        android:id="@+id/weight_progressBar"
+        style="?android:attr/progressBarStyle"
+        android:layout_width="35dp"
+        android:layout_height="29dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginRight="8dp"
+        app:layout_constraintBottom_toBottomOf="@+id/baby_in_seat_text"
+        app:layout_constraintEnd_toEndOf="@+id/baby_in_seat_text"
+        app:layout_constraintTop_toTopOf="@+id/baby_in_seat_text" />
 
 </android.support.constraint.ConstraintLayout>
