@@ -46,6 +46,8 @@ const val STATE_CONNECTED = 2
 const val STATE_TEMP_SENSOR_OFF = 3
 var mConnectionState = STATE_DISCONNECTED
 
+const val ENABLE_BT_REQUEST_CODE = 1
+
 @Suppress("DEPRECATION")
 @TargetApi(23)
 class DeviceActivity : AppCompatActivity(), BeaconConsumer {
@@ -61,13 +63,17 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
     // Bluetooth properties
     lateinit var bluetoothAdapter: BluetoothAdapter
     lateinit var bleScanner: BluetoothLeScanner
-    private var mDeviceAddress: String? = null
     private var mBluetoothLeService: BluetoothLeService? = null
-    val ENABLE_BT_REQUEST_CODE = 1
+    private var isScanning: Boolean = false
+
     var isBabyInSeat: Boolean = false
 
-    // Preference properties
+    // Preference property
     var prefs: Prefs? = null
+
+    // Timeouts
+    private val scannerTimeout = 10000L
+    private val spinnerTimeout = 10000L
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -145,10 +151,10 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
 
     private fun setupBeacon() {
         // Setup UI
-        runOnUiThread {
+        //runOnUiThread {
             beacon_label.visibility = View.GONE
             beacon_progressBar.visibility = View.VISIBLE
-        }
+        //}
         // Initialize Beacon properties
         beaconManager = BeaconManager.getInstanceForApplication(this)
         val uuid: UUID = UUID.fromString("fda50693-a4e2-4fb1-afcf-c6eb07647825")
@@ -182,8 +188,20 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
             this@DeviceActivity.startActivityForResult(enableBtIntent, ENABLE_BT_REQUEST_CODE)
             Toast.makeText(applicationContext, "Enabling Bluetooth!", Toast.LENGTH_LONG).show()
         } else if (mConnectionState != STATE_TEMP_SENSOR_OFF){
-            // Bluetooth is enabled
+            // Bluetooth is enable
             startScan()
+//            Handler().postDelayed({
+//                if (mConnectionState == STATE_CONNECTED || mConnectionState == STATE_CONNECTING) {
+//                    // It has to be either connecting or connected
+//                    d(TAG_BLUETOOTH,"it is either connected or connecting")
+//                    if (isScanning) {
+//                        stopScan()
+//                    }
+//                } else {
+//                    // TODO: display error with ability to retry or cancel
+//                }
+//            }, scannerTimeout)
+
             Intent(this@DeviceActivity, BluetoothLeService::class.java).also {
                 bindService(it, mServiceConnection, Context.BIND_AUTO_CREATE)
             }
@@ -279,9 +297,10 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
                 val distance = beacon.distance.toInt()
                 i(TAG_BEACON, "beacon distance: $distance")
 
-                if (mConnectionState == STATE_DISCONNECTED) {
+                if (mConnectionState == STATE_DISCONNECTED && bluetoothAdapter.isEnabled) {
                     // If we are disconnected from UART but ranging then we are close enough to connect
-                    startScan()
+                    //startScan()
+
                     // TODO: have the beacon be disconnected as well when UART is disconnected
                 } else {
                     beacon_progressBar.visibility = View.GONE
@@ -310,6 +329,8 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
 
             override fun didExitRegion(region: Region) {
                 i(TAG_BEACON, "Adios")
+                beacon_progressBar.visibility = View.GONE
+                beacon_label.visibility = View.VISIBLE
                 beacon_label.text = getString(R.string.notConnected)
             }
 
@@ -329,22 +350,37 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
 
     // Initiates Bluetooth pairing process
     private fun startScan() {
-        if (bluetoothAdapter.isEnabled) {
-            runOnUiThread{
+        if (bluetoothAdapter.isEnabled && !isScanning) {
+            i(TAG_BLUETOOTH, "Scanning...")
+            // Set State
+            isScanning = true
+            Handler().postDelayed({
+                if (mConnectionState == STATE_CONNECTED || mConnectionState == STATE_CONNECTING) {
+                    // It has to be either connecting or connected
+                    d(TAG_BLUETOOTH,"it is either connected or connecting")
+                    if (isScanning) {
+                        stopScan()
+                    }
+                } else {
+                    // TODO: display error with ability to retry or cancel
+                }
+            }, scannerTimeout)
+            // Setup UI
+            //runOnUiThread{
                 temp_label.visibility = View.GONE
                 temp_progressBar.visibility = View.VISIBLE
-            }
+            //}
             bleScanner = bluetoothAdapter.bluetoothLeScanner
             val scanFilter = ScanFilter.Builder().build()
             val settings = ScanSettings.Builder().setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY).build()
             bleScanner.startScan(Arrays.asList(scanFilter), settings, scanCallback)
-        } else {
-            toast("Oh no! Bluetooth is not enabled")
-            i(TAG_BLUETOOTH, "bluetooth is not available")
+
         }
+
     }
 
     private fun stopScan() {
+        isScanning = false
         bluetoothAdapter.bluetoothLeScanner.stopScan(scanCallback)
     }
 
@@ -358,19 +394,21 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
                 setActionBarTitle(STATE_TEMP_SENSOR_OFF)
                 return
             }
-            if(getString(R.string.uartName) == result.device.name &&
-                    (mConnectionState != STATE_CONNECTING || mConnectionState != STATE_CONNECTED)) {
-                i(TAG_BLUETOOTH, "Scanning...")
-                temp_progressBar.visibility = View.VISIBLE
+            if(getString(R.string.uartName) == result.device.name && mConnectionState == STATE_DISCONNECTED) {
+                // Set State
                 mConnectionState = STATE_CONNECTING
-                setActionBarTitle(mConnectionState)
-                mDeviceAddress = result.device.address
+                // Setup UI
+                //runOnUiThread {
+                    setActionBarTitle(mConnectionState)
+                //}
+                val mDeviceAddress = result.device.address
                 stopScan()
                 if (mBluetoothLeService != null) {
                     val connectionResult = mBluetoothLeService!!.connectUART(mDeviceAddress)
                     d(TAG_BLUETOOTH, "Connect request result=$connectionResult")
                 } else {
                     d(TAG_BLUETOOTH, "Bluetooth service is null!!!")
+                    // TODO: display error with ability to retry
                 }
             }
             super.onScanResult(callbackType, result)
@@ -386,21 +424,31 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
         override fun onReceive(context: Context, intent: Intent) {
             when (intent.action){
                 BluetoothLeService.ACTION_GATT_CONNECTED -> {
+                    // Set State
                     mConnectionState = STATE_CONNECTED
-                    setActionBarTitle(mConnectionState)
+                    // Setup UI
+                    //runOnUiThread {
+                        setActionBarTitle(mConnectionState)
+                    //}
                 }
                 BluetoothLeService.ACTION_GATT_DISCONNECTED -> {
                     sendNotification(tooFarNotificationDescription)
                     // Set State
                     mConnectionState = STATE_DISCONNECTED
+                    if (isScanning) {
+                        stopScan()
+                    }
                     // Setup UI
-                    temp_progressBar.visibility = View.GONE
-                    //beacon_progressBar.visibility = View.GONE
-                    temp_label.visibility = View.VISIBLE
-                    //beacon_label.visibility = View.VISIBLE
-                    setActionBarTitle(mConnectionState)
-                    temp_label.text = getString(R.string.notConnected)
-                    beacon_label.text = getString(R.string.notConnected)
+                    //runOnUiThread {
+                        temp_progressBar.visibility = View.GONE
+                        //beacon_progressBar.visibility = View.GONE
+                        temp_label.visibility = View.VISIBLE
+                        //beacon_label.visibility = View.VISIBLE
+                        setActionBarTitle(mConnectionState)
+                        temp_label.text = getString(R.string.notConnected)
+                        beacon_label.text = getString(R.string.notConnected)
+                    //}
+
                 }
                 BluetoothLeService.ACTION_DATA_AVAILABLE -> {
                     val data = intent.getStringExtra(BluetoothLeService.EXTRA_DATA)
@@ -427,16 +475,23 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
             if (fahrenheitCelsius) {
                 val fahrenheitTemp = (celsiusTemp.toDouble() * 9/5 + 32).roundToInt().toString()
                 val fahrenheitTempWithDegree = "$fahrenheitTemp°F"
-                temp_progressBar.visibility = View.GONE
-                temp_label.visibility = View.VISIBLE
-                temp_label.text = fahrenheitTempWithDegree
                 i(TAG_BLUETOOTH, "temp: $fahrenheitTemp")
+                // Setup UI
+                //runOnUiThread {
+                    temp_progressBar.visibility = View.GONE
+                    temp_label.visibility = View.VISIBLE
+                    temp_label.text = fahrenheitTempWithDegree
+                //}
+
             } else {
                 val celsiusTempWithDegree = "$celsiusTemp°C"
-                temp_progressBar.visibility = View.GONE
-                temp_label.visibility = View.VISIBLE
-                temp_label.text = celsiusTempWithDegree
                 i(TAG_BLUETOOTH, "temp: $celsiusTemp")
+                // Setup UI
+                //runOnUiThread {
+                    temp_progressBar.visibility = View.GONE
+                    temp_label.visibility = View.VISIBLE
+                    temp_label.text = celsiusTempWithDegree
+                //}
             }
             if (weight < 3000) {
                 isBabyInSeat(true)
@@ -444,14 +499,14 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
             }
             i(TAG_BLUETOOTH, "weight: $weight")
         } else {
-            // set state
+            // Set State
             mConnectionState = STATE_TEMP_SENSOR_OFF
-            // setup UI
-            this.runOnUiThread {
+            // Setup UI
+            //runOnUiThread {
                 setActionBarTitle(STATE_TEMP_SENSOR_OFF)
                 temp_progressBar.visibility = View.GONE
                 temp_label.text = getString(R.string.notConnected)
-            }
+            //}
         }
     }
 
@@ -479,5 +534,27 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
             return intentFilter
         }
     }
+
+    // Spinner functions
+    private fun showSpinners() {
+        temp_progressBar.visibility = View.VISIBLE
+        beacon_progressBar.visibility = View.VISIBLE
+        temp_label.visibility = View.GONE
+        beacon_label.visibility = View.GONE
+        Handler().postDelayed({
+            temp_progressBar.visibility = View.GONE
+            beacon_progressBar.visibility = View.GONE
+            temp_label.visibility = View.VISIBLE
+            beacon_label.visibility = View.VISIBLE
+        }, spinnerTimeout)
+    }
+
+    private fun hideSpinners() {
+        temp_progressBar.visibility = View.GONE
+        beacon_progressBar.visibility = View.GONE
+        temp_label.visibility = View.VISIBLE
+        beacon_label.visibility = View.VISIBLE
+    }
+
 
 }

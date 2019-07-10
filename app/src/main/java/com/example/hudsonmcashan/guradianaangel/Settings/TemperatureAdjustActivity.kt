@@ -94,6 +94,7 @@ class TemperatureAdjustActivity : AppCompatActivity() {
             fahrenheitCelsius_status.text = if (isChecked)  getString(R.string.fahrenheitDegree) else getString(R.string.celsiusDegree)
             // Persist fahrenheitCelsius setting
             prefs!!.fahrenheitCelsius = isChecked
+            fahrenheitCelsius = isChecked
             i(TAG_SETTINGS, "fOrC: $isChecked")
             if (isChecked) {
                 maxTemp_status.text = "${maxTemp}°F"
@@ -135,6 +136,7 @@ class TemperatureAdjustActivity : AppCompatActivity() {
                 val newMaxTemp = seekBar.progress + 80
                 // Persist max temp setting
                 prefs!!.maxTemp = newMaxTemp
+                maxTemp = newMaxTemp
                 i(TAG_SETTINGS, "newMaxTemp: $newMaxTemp")
                 if (fahrenheitCelsius!!) {
                     maxTemp_status.text = "${newMaxTemp}°F"
