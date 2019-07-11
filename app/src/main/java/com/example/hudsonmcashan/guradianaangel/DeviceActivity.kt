@@ -67,7 +67,7 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
     private var mBluetoothLeService: BluetoothLeService? = null
     private var isScanning: Boolean = false
 
-    var isBabyInSeat: Boolean = false
+    var isWeightDetected: Boolean = false
 
     // Preference property
     var prefs: Prefs? = null
@@ -154,8 +154,7 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
     private fun setupBeacon() {
         // Setup UI
         //runOnUiThread {
-            beacon_label.visibility = View.GONE
-            beacon_progressBar.visibility = View.VISIBLE
+            showBeaconSpinner()
         //}
         // Initialize Beacon properties
         beaconManager = BeaconManager.getInstanceForApplication(this)
@@ -283,9 +282,10 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
         notificationManager.notify(1, builder.build())
     }
 
-    private fun isBabyInSeat(isInSeat: Boolean) {
-        isBabyInSeat = isInSeat
-        baby_in_seat_label.text = if (isBabyInSeat) "Yes" else "No"
+    private fun setWeightStatus(isWeightDetected: Boolean) {
+        // TODO: only send notifications if weight is detected
+        this.isWeightDetected = isWeightDetected
+        weight_label.text = if (isWeightDetected) "Yes" else "No"
     }
 
     // Beacon function
@@ -305,8 +305,7 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
 
                     // TODO: have the beacon be disconnected as well when UART is disconnected
                 } else {
-                    beacon_progressBar.visibility = View.GONE
-                    beacon_label.visibility = View.VISIBLE
+
                     when (distance) {
                         in Int.MIN_VALUE until 0 -> beacon_label.text = getString(R.string.notConnected)
                         in 0..5 -> beacon_label.text = getString(R.string.veryClose)
@@ -331,8 +330,7 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
 
             override fun didExitRegion(region: Region) {
                 i(TAG_BEACON, "Adios")
-                beacon_progressBar.visibility = View.GONE
-                beacon_label.visibility = View.VISIBLE
+                hideBeaconSpinner()
                 beacon_label.text = getString(R.string.notConnected)
             }
 
@@ -369,8 +367,8 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
             }, scannerTimeout)
             // Setup UI
             //runOnUiThread{
-                temp_label.visibility = View.GONE
-                temp_progressBar.visibility = View.VISIBLE
+                showTempSpinner()
+                showWeightSpinner()
             //}
             bleScanner = bluetoothAdapter.bluetoothLeScanner
             val scanFilter = ScanFilter.Builder().build()
@@ -431,6 +429,8 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
                     // Setup UI
                     //runOnUiThread {
                         setActionBarTitle(mConnectionState)
+                        hideTempSpinner()
+                        hideWeightSpinner()
                     //}
                 }
                 BluetoothLeService.ACTION_GATT_DISCONNECTED -> {
@@ -442,13 +442,9 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
                     }
                     // Setup UI
                     //runOnUiThread {
-                        temp_progressBar.visibility = View.GONE
-                        //beacon_progressBar.visibility = View.GONE
-                        temp_label.visibility = View.VISIBLE
-                        //beacon_label.visibility = View.VISIBLE
-                        setActionBarTitle(mConnectionState)
-                        temp_label.text = getString(R.string.notConnected)
-                        beacon_label.text = getString(R.string.notConnected)
+                        hideTempSpinner()
+                        hideWeightSpinner()
+                        //hideBeaconSpinner()
                     //}
 
                 }
@@ -467,7 +463,7 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
 
     private fun parseAndDisplayData(data: String) {
         val tempSensorOnOff = prefs?.tempSensorOnOff ?: true
-        if (tempSensorOnOff) {
+        if (tempSensorOnOff) { // Temp Sensor is On
             val dataArray = data.split(" ")
             val rawTemp = dataArray[0]
             val rawWeight = dataArray[1]
@@ -480,8 +476,8 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
                 i(TAG_BLUETOOTH, "temp: $fahrenheitTemp")
                 // Setup UI
                 //runOnUiThread {
-                    temp_progressBar.visibility = View.GONE
-                    temp_label.visibility = View.VISIBLE
+                    //temp_progressBar.visibility = View.GONE
+                    //temp_label.visibility = View.VISIBLE
                     temp_label.text = fahrenheitTempWithDegree
                 //}
 
@@ -490,17 +486,16 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
                 i(TAG_BLUETOOTH, "temp: $celsiusTemp")
                 // Setup UI
                 //runOnUiThread {
-                    temp_progressBar.visibility = View.GONE
-                    temp_label.visibility = View.VISIBLE
+                    //temp_progressBar.visibility = View.GONE
+                    //temp_label.visibility = View.VISIBLE
                     temp_label.text = celsiusTempWithDegree
                 //}
             }
             if (weight < 3000) {
-                isBabyInSeat(true)
-                // TODO: only send notifications if the baby is in the seat
+                setWeightStatus(true)
             }
             i(TAG_BLUETOOTH, "weight: $weight")
-        } else {
+        } else { // Temp Sensor is Off
             // Set State
             mConnectionState = STATE_TEMP_SENSOR_OFF
             // Setup UI
@@ -537,6 +532,48 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
         }
     }
 
+    private fun showTempSpinner() {
+        temp_progressBar.visibility = View.VISIBLE
+        temp_label.visibility = View.GONE
+        Handler().postDelayed({
+            temp_progressBar.visibility = View.GONE
+            temp_label.visibility = View.VISIBLE
+        }, spinnerTimeout)
+    }
+
+    private fun showBeaconSpinner() {
+        beacon_progressBar.visibility = View.VISIBLE
+        beacon_label.visibility = View.GONE
+        Handler().postDelayed({
+            beacon_progressBar.visibility = View.GONE
+            beacon_label.visibility = View.VISIBLE
+        }, spinnerTimeout)
+    }
+
+    private fun showWeightSpinner() {
+        weight_progressBar.visibility = View.VISIBLE
+        weight_label.visibility = View.GONE
+        Handler().postDelayed({
+            weight_label.visibility = View.VISIBLE
+            weight_progressBar.visibility = View.GONE
+        }, spinnerTimeout)
+    }
+
+    private fun hideTempSpinner() {
+        temp_progressBar.visibility = View.GONE
+        temp_label.visibility = View.VISIBLE
+    }
+
+    private fun hideBeaconSpinner() {
+        beacon_progressBar.visibility = View.GONE
+        beacon_label.visibility = View.VISIBLE
+    }
+
+    private fun hideWeightSpinner() {
+        weight_label.visibility = View.VISIBLE
+        weight_progressBar.visibility = View.GONE
+    }
+
     // Spinner functions
     private fun showSpinners() {
         temp_progressBar.visibility = View.VISIBLE
@@ -544,18 +581,23 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
         temp_label.visibility = View.GONE
         beacon_label.visibility = View.GONE
         Handler().postDelayed({
-            temp_progressBar.visibility = View.GONE
-            beacon_progressBar.visibility = View.GONE
             temp_label.visibility = View.VISIBLE
             beacon_label.visibility = View.VISIBLE
+            weight_label.visibility = View.VISIBLE
+            temp_progressBar.visibility = View.GONE
+            beacon_progressBar.visibility = View.GONE
+            weight_progressBar.visibility = View.GONE
         }, spinnerTimeout)
     }
 
     private fun hideSpinners() {
-        temp_progressBar.visibility = View.GONE
-        beacon_progressBar.visibility = View.GONE
         temp_label.visibility = View.VISIBLE
         beacon_label.visibility = View.VISIBLE
+        weight_label.visibility = View.VISIBLE
+        temp_progressBar.visibility = View.GONE
+        beacon_progressBar.visibility = View.GONE
+        weight_progressBar.visibility = View.GONE
+
     }
 
 
