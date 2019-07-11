@@ -32,14 +32,24 @@ class SettingsActivity : AppCompatActivity() {
 
     private fun setupListView() {
         val listView = findViewById<ListView>(R.id.settings_listview)
-        val settings = arrayListOf("Adjust Temperature Sensor","Disconnect from Cushion")
+        val settings = arrayListOf("Adjust Temperature Sensor","Adjust GPS", "Reconnect to Cushion","Disconnect from Cushion")
         listView.adapter = SettingsAdapter(this, settings)
         listView.setOnItemClickListener { _, _, position, _ ->
-            if (position == 0) {
-                val intent = Intent(this, TemperatureAdjustActivity::class.java)
-                startActivity(intent)
-            } else {
-                // TODO: disconnect everything
+            when (position) {
+                0 -> {
+                    val intent = Intent(this, TemperatureAdjustActivity::class.java)
+                    startActivity(intent)
+                }
+                1 -> {
+                    val intent = Intent(this, GPSAdjustActivity::class.java)
+                    startActivity(intent)
+                }
+                2 -> {
+                    // TODO: reconnect
+                }
+                3 -> {
+                    // TODO: disconnect everything
+                }
             }
         }
     }

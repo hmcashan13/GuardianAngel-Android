@@ -294,7 +294,6 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
         beaconManager.removeAllRangeNotifiers()
         beaconManager.addRangeNotifier { beacons, _ ->
             if (beacons.isNotEmpty()) {
-
                 val beacon = beacons.first()
                 val distance = beacon.distance.toInt()
                 i(TAG_BEACON, "beacon distance: $distance")
@@ -305,7 +304,6 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
 
                     // TODO: have the beacon be disconnected as well when UART is disconnected
                 } else {
-
                     when (distance) {
                         in Int.MIN_VALUE until 0 -> beacon_label.text = getString(R.string.notConnected)
                         in 0..5 -> beacon_label.text = getString(R.string.veryClose)
