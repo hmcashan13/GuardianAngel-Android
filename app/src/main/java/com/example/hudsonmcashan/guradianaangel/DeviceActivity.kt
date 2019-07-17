@@ -1,6 +1,5 @@
 package com.example.hudsonmcashan.guradianaangel
 
-import android.annotation.SuppressLint
 import android.annotation.TargetApi
 import android.app.*
 import android.app.Notification.*
@@ -17,15 +16,13 @@ import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.widget.RemoteViews
 import android.widget.Toast
-import org.jetbrains.anko.toast
 import android.bluetooth.BluetoothAdapter
 import android.content.*
 import android.os.*
 import android.provider.Settings
-import android.support.v4.app.NotificationCompat
+import android.support.design.widget.BottomNavigationView
 import android.util.Log.*
 import android.view.View
-import android.widget.RelativeLayout
 import com.example.hudsonmcashan.guradianaangel.Settings.Prefs
 import com.example.hudsonmcashan.guradianaangel.Settings.SettingsActivity
 import com.example.hudsonmcashan.guradianaangel.Settings.TAG_SETTINGS
@@ -82,6 +79,7 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
         setContentView(R.layout.activity_connection)
 
         prefs = Prefs(this)
+        setupTabBar()
         setupActionBar()
         setupWriteSettings()
         setupInfoButton()
@@ -105,6 +103,25 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
         mBluetoothLeService = null
         // turn off receiver
         unregisterReceiver(mGattUpdateReceiver)
+    }
+
+    private fun setupTabBar() {
+        val bottomNavigation: BottomNavigationView = findViewById(R.id.navigationView)
+        bottomNavigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener)
+    }
+
+    private val mOnNavigationItemSelectedListener = BottomNavigationView.OnNavigationItemSelectedListener { item ->
+        when (item.itemId) {
+            R.id.navigation_device -> {
+
+                return@OnNavigationItemSelectedListener true
+            }
+            R.id.navigation_gps -> {
+
+                return@OnNavigationItemSelectedListener true
+            }
+        }
+        false
     }
 
     private fun setupActionBar() {
@@ -288,7 +305,7 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
         weight_label.text = if (isWeightDetected) "Yes" else "No"
     }
 
-    // Beacon function
+    // Manages Beacon connection
     override fun onBeaconServiceConnect() {
         beaconManager.removeAllMonitorNotifiers()
         beaconManager.removeAllRangeNotifiers()
