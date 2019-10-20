@@ -29,6 +29,9 @@
         <activity android:name=".DeviceActivity"
             android:screenOrientation="portrait">
         </activity>
+        <activity android:name=".GPSActivity"
+            android:screenOrientation="portrait">
+        </activity>
         <activity android:name=".InfoDeviceActivity"
             android:screenOrientation="portrait">
         </activity>

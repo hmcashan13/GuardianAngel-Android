@@ -21,10 +21,12 @@ import android.provider.Settings
 import android.util.Log.*
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
+import androidx.fragment.app.Fragment
 import com.example.hudsonmcashan.guradianaangel.Settings.Prefs
 import com.example.hudsonmcashan.guradianaangel.Settings.SettingsActivity
 import com.example.hudsonmcashan.guradianaangel.Settings.TAG_SETTINGS
 import com.google.android.material.bottomnavigation.BottomNavigationView
+import kotlinx.android.synthetic.main.fragment_device.*
 import kotlin.math.roundToInt
 
 // App info
@@ -48,6 +50,7 @@ const val ENABLE_BT_REQUEST_CODE = 1
 @Suppress("DEPRECATION")
 @TargetApi(26)
 class DeviceActivity : AppCompatActivity(), BeaconConsumer {
+
     // Notification properties
     private val tooFarNotificationDescription = "You are far from the cushion"
     private val inRegionNotificationDescription = "Entered region"
@@ -105,17 +108,29 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
         unregisterReceiver(mGattUpdateReceiver)
     }
 
+    private val gpsFragment = GPSFragment()
+    private val deviceFragment = DeviceFragment()
+    private val fragmentManager = supportFragmentManager
+    private var activeFragment: Fragment = deviceFragment
+
     private fun setupTabBar() {
         val bottomNavigation: BottomNavigationView = findViewById(R.id.navigationView)
         bottomNavigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener)
+        fragmentManager.beginTransaction().add(R.id.main_container, gpsFragment,"2").hide(gpsFragment).commit()
+        fragmentManager.beginTransaction().add(R.id.main_container, deviceFragment, "1").commit()
+
     }
 
     private val mOnNavigationItemSelectedListener = BottomNavigationView.OnNavigationItemSelectedListener { item ->
         when (item.itemId) {
             R.id.navigation_device -> {
+                fragmentManager.beginTransaction().hide(activeFragment).show(deviceFragment).commit()
+                activeFragment = deviceFragment
                 return@OnNavigationItemSelectedListener true
             }
             R.id.navigation_gps -> {
+                fragmentManager.beginTransaction().hide(activeFragment).show(gpsFragment).commit()
+                activeFragment = gpsFragment
                 return@OnNavigationItemSelectedListener true
             }
         }
@@ -150,9 +165,8 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
         info_device_button.setOnClickListener {
             val infoButton = findViewById<Button>(R.id.info_device_button)
             infoButton.setOnClickListener {
-                sendNotification(tooFarNotificationDescription)
-//                val intent = Intent(this, InfoDeviceActivity::class.java)
-//                startActivity(intent)
+                val intent = Intent(this, InfoDeviceActivity::class.java)
+                startActivity(intent)
             }
         }
     }
@@ -171,7 +185,7 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
     private fun setupBeacon() {
         // Setup UI
         //runOnUiThread {
-            showBeaconSpinner()
+//            showBeaconSpinner()
         //}
         // Initialize Beacon properties
         beaconManager = BeaconManager.getInstanceForApplication(this)
@@ -227,10 +241,10 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
                 i(TAG_BLUETOOTH, "UART setup")
             }
         } else {
-            temp_label.text = "Not Connected"
-            weight_label.text = "No"
-            hideTempSpinner()
-            hideWeightSpinner()
+//            temp_label.text = "Not Connected"
+//            weight_label.text = "No"
+            //hideTempSpinner()
+            //hideWeightSpinner()
 
             // TODO: have the format of the AlertDialog look nicer
             // Initialize a new instance of
@@ -375,7 +389,7 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
 
             override fun didExitRegion(region: Region) {
                 i(TAG_BEACON, "Adios")
-                hideBeaconSpinner()
+                //hideBeaconSpinner()
                 beacon_label.text = getString(R.string.notConnected)
             }
 
@@ -413,8 +427,8 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
             }, scannerTimeout)
             // Setup UI
             //runOnUiThread{
-                showTempSpinner()
-                showWeightSpinner()
+                //showTempSpinner()
+                //showWeightSpinner()
             //}
             bleScanner = bluetoothAdapter.bluetoothLeScanner
             val scanFilter = ScanFilter.Builder().build()
@@ -475,8 +489,8 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
                     // Setup UI
                     //runOnUiThread {
                         setActionBarTitle(mConnectionState)
-                        hideTempSpinner()
-                        hideWeightSpinner()
+                        //hideTempSpinner()
+                        //hideWeightSpinner()
                     //}
                 }
                 BluetoothLeService.ACTION_GATT_DISCONNECTED -> {
@@ -488,8 +502,8 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
                     }
                     // Setup UI
                     //runOnUiThread {
-                        hideTempSpinner()
-                        hideWeightSpinner()
+                        //hideTempSpinner()
+                        //hideWeightSpinner()
                         //hideBeaconSpinner()
                     //}
 
@@ -524,7 +538,7 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
                 //runOnUiThread {
                     //temp_progressBar.visibility = View.GONE
                     //temp_label.visibility = View.VISIBLE
-                    temp_label.text = fahrenheitTempWithDegree
+                    //temp_label.text = fahrenheitTempWithDegree
                 //}
 
             } else {
@@ -534,7 +548,7 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
                 //runOnUiThread {
                     //temp_progressBar.visibility = View.GONE
                     //temp_label.visibility = View.VISIBLE
-                    temp_label.text = celsiusTempWithDegree
+                    //temp_label.text = celsiusTempWithDegree
                 //}
             }
             if (weight < 3000) {
@@ -548,7 +562,7 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
             //runOnUiThread {
                 setActionBarTitle(STATE_TEMP_SENSOR_OFF)
                 temp_progressBar.visibility = View.GONE
-                temp_label.text = getString(R.string.notConnected)
+                //temp_label.text = getString(R.string.notConnected)
             //}
         }
     }
@@ -578,73 +592,71 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
         }
     }
 
-    private fun showTempSpinner() {
-        temp_progressBar.visibility = View.VISIBLE
-        temp_label.visibility = View.GONE
-        Handler().postDelayed({
-            temp_progressBar.visibility = View.GONE
-            temp_label.visibility = View.VISIBLE
-        }, spinnerTimeout)
-    }
-
-    private fun showBeaconSpinner() {
-        beacon_progressBar.visibility = View.VISIBLE
-        beacon_label.visibility = View.GONE
-        Handler().postDelayed({
-            beacon_progressBar.visibility = View.GONE
-            beacon_label.visibility = View.VISIBLE
-        }, spinnerTimeout)
-    }
-
-    private fun showWeightSpinner() {
-        weight_progressBar.visibility = View.VISIBLE
-        weight_label.visibility = View.GONE
-        Handler().postDelayed({
-            weight_label.visibility = View.VISIBLE
-            weight_progressBar.visibility = View.GONE
-        }, spinnerTimeout)
-    }
-
-    private fun hideTempSpinner() {
-        temp_progressBar.visibility = View.GONE
-        temp_label.visibility = View.VISIBLE
-    }
-
-    private fun hideBeaconSpinner() {
-        beacon_progressBar.visibility = View.GONE
-        beacon_label.visibility = View.VISIBLE
-    }
-
-    private fun hideWeightSpinner() {
-        weight_label.visibility = View.VISIBLE
-        weight_progressBar.visibility = View.GONE
-    }
-
-    // Spinner functions
-    private fun showSpinners() {
-        temp_progressBar.visibility = View.VISIBLE
-        beacon_progressBar.visibility = View.VISIBLE
-        temp_label.visibility = View.GONE
-        beacon_label.visibility = View.GONE
-        Handler().postDelayed({
-            temp_label.visibility = View.VISIBLE
-            beacon_label.visibility = View.VISIBLE
-            weight_label.visibility = View.VISIBLE
-            temp_progressBar.visibility = View.GONE
-            beacon_progressBar.visibility = View.GONE
-            weight_progressBar.visibility = View.GONE
-        }, spinnerTimeout)
-    }
-
-    private fun hideSpinners() {
-        temp_label.visibility = View.VISIBLE
-        beacon_label.visibility = View.VISIBLE
-        weight_label.visibility = View.VISIBLE
-        temp_progressBar.visibility = View.GONE
-        beacon_progressBar.visibility = View.GONE
-        weight_progressBar.visibility = View.GONE
-
-    }
-
-
+//    private fun showTempSpinner() {
+//        temp_progressBar.visibility = View.VISIBLE
+//        temp_label.visibility = View.GONE
+//        Handler().postDelayed({
+//            temp_progressBar.visibility = View.GONE
+//            temp_label.visibility = View.VISIBLE
+//        }, spinnerTimeout)
+//    }
+//
+//    private fun showBeaconSpinner() {
+//        beacon_progressBar.visibility = View.VISIBLE
+//        beacon_label.visibility = View.GONE
+//        Handler().postDelayed({
+//            beacon_progressBar.visibility = View.GONE
+//            beacon_label.visibility = View.VISIBLE
+//        }, spinnerTimeout)
+//    }
+//
+//    private fun showWeightSpinner() {
+//        weight_progressBar.visibility = View.VISIBLE
+//        weight_label.visibility = View.GONE
+//        Handler().postDelayed({
+//            weight_label.visibility = View.VISIBLE
+//            weight_progressBar.visibility = View.GONE
+//        }, spinnerTimeout)
+//    }
+//
+//    private fun hideTempSpinner() {
+//        temp_progressBar.visibility = View.GONE
+//        temp_label.visibility = View.VISIBLE
+//    }
+//
+//    private fun hideBeaconSpinner() {
+//        beacon_progressBar.visibility = View.GONE
+//        beacon_label.visibility = View.VISIBLE
+//    }
+//
+//    private fun hideWeightSpinner() {
+//        weight_label.visibility = View.VISIBLE
+//        weight_progressBar.visibility = View.GONE
+//    }
+//
+//    // Spinner functions
+//    private fun showSpinners() {
+//        temp_progressBar.visibility = View.VISIBLE
+//        beacon_progressBar.visibility = View.VISIBLE
+//        temp_label.visibility = View.GONE
+//        beacon_label.visibility = View.GONE
+//        Handler().postDelayed({
+//            temp_label.visibility = View.VISIBLE
+//            beacon_label.visibility = View.VISIBLE
+//            weight_label.visibility = View.VISIBLE
+//            temp_progressBar.visibility = View.GONE
+//            beacon_progressBar.visibility = View.GONE
+//            weight_progressBar.visibility = View.GONE
+//        }, spinnerTimeout)
+//    }
+//
+//    private fun hideSpinners() {
+//        temp_label.visibility = View.VISIBLE
+//        beacon_label.visibility = View.VISIBLE
+//        weight_label.visibility = View.VISIBLE
+//        temp_progressBar.visibility = View.GONE
+//        beacon_progressBar.visibility = View.GONE
+//        weight_progressBar.visibility = View.GONE
+//
+//    }
 }

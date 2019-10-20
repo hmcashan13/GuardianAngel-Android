@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    tools:context=".DeviceFragment">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <ImageView
+            android:id="@+id/connection_logo"
+            android:layout_width="266dp"
+            android:layout_height="163dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginLeft="8dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginEnd="8dp"
+            android:layout_marginRight="8dp"
+            android:adjustViewBounds="true"
+            android:scaleType="centerCrop"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:srcCompat="@mipmap/new_logo_foreground" />
+
+        <TextView
+            android:id="@+id/temp_text"
+            android:layout_width="0dp"
+            android:layout_height="29dp"
+            android:layout_marginStart="24dp"
+            android:layout_marginLeft="24dp"
+            android:layout_marginTop="24dp"
+            android:layout_marginEnd="24dp"
+            android:layout_marginRight="24dp"
+            android:background="@drawable/rounded_button2"
+            android:text="  Temperature:"
+            android:textColor="@color/colorPrimary"
+            android:textSize="18sp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/connection_logo"
+            tools:text="  Temperature:" />
+
+        <TextView
+            android:id="@+id/beacon_text"
+            android:layout_width="0dp"
+            android:layout_height="29dp"
+            android:layout_marginTop="20dp"
+            android:background="@drawable/rounded_button2"
+            android:text="  Proximity from cushion:"
+            android:textColor="@color/colorPrimary"
+            android:textSize="18sp"
+            app:layout_constraintEnd_toEndOf="@+id/temp_text"
+            app:layout_constraintHorizontal_bias="0.0"
+            app:layout_constraintStart_toStartOf="@+id/temp_text"
+            app:layout_constraintTop_toBottomOf="@+id/temp_text"
+            tools:text="  Proximity from cushion:" />
+
+        <TextView
+            android:id="@+id/weight_text"
+            android:layout_width="0dp"
+            android:layout_height="29dp"
+            android:layout_marginTop="20dp"
+            android:background="@drawable/rounded_button2"
+            android:text="  Device Active?"
+            android:textAppearance="@style/TextAppearance.AppCompat.Caption"
+            android:textColor="@color/colorPrimary"
+            android:textColorLink="@color/colorPrimary"
+            android:textSize="18sp"
+            app:layout_constraintEnd_toEndOf="@+id/beacon_text"
+            app:layout_constraintStart_toStartOf="@+id/beacon_text"
+            app:layout_constraintTop_toBottomOf="@+id/beacon_text"
+            tools:text="  Device Active?" />
+
+        <TextView
+            android:id="@+id/temp_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
+            android:layout_marginRight="8dp"
+            android:text="Not Connected"
+            android:textColor="@android:color/black"
+            android:textSize="18sp"
+            app:layout_constraintBottom_toBottomOf="@+id/temp_text"
+            app:layout_constraintEnd_toEndOf="@+id/temp_text"
+            app:layout_constraintTop_toTopOf="@+id/temp_text"
+            tools:text="Not Connected" />
+
+        <TextView
+            android:id="@+id/beacon_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
+            android:layout_marginRight="8dp"
+            android:text="Not Connected"
+            android:textColor="@android:color/black"
+            android:textSize="18sp"
+            app:layout_constraintBottom_toBottomOf="@+id/beacon_text"
+            app:layout_constraintEnd_toEndOf="@+id/beacon_text"
+            app:layout_constraintTop_toTopOf="@+id/beacon_text"
+            tools:text="Not Connected" />
+
+        <TextView
+            android:id="@+id/weight_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
+            android:layout_marginRight="8dp"
+            android:text="No"
+            android:textColor="@android:color/black"
+            android:textSize="18sp"
+            app:layout_constraintBottom_toBottomOf="@+id/weight_text"
+            app:layout_constraintEnd_toEndOf="@+id/weight_text"
+            app:layout_constraintTop_toTopOf="@+id/weight_text"
+            tools:text="No" />
+
+        <ProgressBar
+            android:id="@+id/temp_progressBar"
+            style="?android:attr/progressBarStyle"
+            android:layout_width="36dp"
+            android:layout_height="0dp"
+            android:layout_marginEnd="8dp"
+            android:layout_marginRight="8dp"
+            app:layout_constraintBottom_toBottomOf="@+id/temp_text"
+            app:layout_constraintEnd_toEndOf="@+id/temp_text"
+            app:layout_constraintTop_toTopOf="@+id/temp_text" />
+
+        <ProgressBar
+            android:id="@+id/beacon_progressBar"
+            style="?android:attr/progressBarStyle"
+            android:layout_width="36dp"
+            android:layout_height="0dp"
+            android:layout_marginEnd="8dp"
+            android:layout_marginRight="8dp"
+            app:layout_constraintBottom_toBottomOf="@+id/beacon_text"
+            app:layout_constraintEnd_toEndOf="@+id/beacon_text"
+            app:layout_constraintTop_toTopOf="@+id/beacon_text"
+            app:layout_constraintVertical_bias="1.0" />
+
+        <ProgressBar
+            android:id="@+id/weight_progressBar"
+            style="?android:attr/progressBarStyle"
+            android:layout_width="35dp"
+            android:layout_height="29dp"
+            android:layout_marginEnd="8dp"
+            android:layout_marginRight="8dp"
+            app:layout_constraintBottom_toBottomOf="@+id/weight_text"
+            app:layout_constraintEnd_toEndOf="@+id/weight_text"
+            app:layout_constraintTop_toTopOf="@+id/weight_text" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</FrameLayout>
