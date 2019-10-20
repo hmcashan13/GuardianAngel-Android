@@ -141,6 +141,8 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
         val canWrite = Settings.System.canWrite(this)
         if (!canWrite) {
             Settings.ACTION_MANAGE_WRITE_SETTINGS
+        } else {
+            // TODO: handle not being able to (show error?)
         }
     }
 
@@ -225,6 +227,32 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
                 i(TAG_BLUETOOTH, "UART setup")
             }
         } else {
+            temp_label.text = "Not Connected"
+            weight_label.text = "No"
+            hideTempSpinner()
+            hideWeightSpinner()
+
+            // TODO: have the format of the AlertDialog look nicer
+            // Initialize a new instance of
+            val builder = AlertDialog.Builder(this@DeviceActivity)
+
+            // Set the alert dialog title
+            builder.setTitle("Error!")
+
+            // Display a message on alert dialog
+            builder.setMessage("Bluetooth is not available on this device")
+
+            // Display a neutral button on alert dialog
+            builder.setNeutralButton("Ok"){_,_ -> }
+
+            // TODO: give more information for the user to do fix the problem (email support)
+            // TODO: this could simply be because the bluetooth is turned off
+
+            // Finally, make the alert dialog using builder
+            val dialog: AlertDialog = builder.create()
+
+            // Display the alert dialog on app interface
+            dialog.show()
             i(TAG_BLUETOOTH, "Bluetooth is not available on this device")
         }
     }
