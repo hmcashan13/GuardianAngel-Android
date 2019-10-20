@@ -1,9 +1,9 @@
 package com.example.hudsonmcashan.guradianaangel
 
-import android.support.v4.app.Fragment
-import android.support.v4.app.FragmentManager
-import android.support.v4.app.FragmentPagerAdapter
 import android.util.Log.i
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentManager
+import androidx.fragment.app.FragmentPagerAdapter
 
 val TAG_TAB = "TabAdapter"
 

@@ -2,12 +2,12 @@ package com.example.hudsonmcashan.guradianaangel.Settings
 
 import android.content.Intent
 import android.os.Bundle
-import android.support.v7.app.AppCompatActivity
 import android.util.Log.i
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.SeekBar
 import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
 import com.example.hudsonmcashan.guradianaangel.R
 import kotlinx.android.synthetic.main.activity_temperature.*
 

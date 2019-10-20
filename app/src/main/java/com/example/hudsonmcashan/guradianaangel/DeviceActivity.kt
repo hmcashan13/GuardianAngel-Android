@@ -5,12 +5,10 @@ import android.app.*
 import android.app.Notification.*
 import android.bluetooth.*
 import android.bluetooth.le.*
-import android.support.v7.app.AppCompatActivity
 import android.widget.Button
 import kotlinx.android.synthetic.main.activity_connection.*
 import java.util.*
 import org.altbeacon.beacon.*
-import android.support.v7.app.AlertDialog
 import android.content.pm.PackageManager
 import android.graphics.BitmapFactory
 import android.graphics.Color
@@ -20,12 +18,13 @@ import android.bluetooth.BluetoothAdapter
 import android.content.*
 import android.os.*
 import android.provider.Settings
-import android.support.design.widget.BottomNavigationView
 import android.util.Log.*
 import android.view.View
+import androidx.appcompat.app.AppCompatActivity
 import com.example.hudsonmcashan.guradianaangel.Settings.Prefs
 import com.example.hudsonmcashan.guradianaangel.Settings.SettingsActivity
 import com.example.hudsonmcashan.guradianaangel.Settings.TAG_SETTINGS
+import com.google.android.material.bottomnavigation.BottomNavigationView
 import kotlin.math.roundToInt
 
 // App info
@@ -47,7 +46,7 @@ var mConnectionState = STATE_DISCONNECTED
 const val ENABLE_BT_REQUEST_CODE = 1
 
 @Suppress("DEPRECATION")
-@TargetApi(23)
+@TargetApi(26)
 class DeviceActivity : AppCompatActivity(), BeaconConsumer {
     // Notification properties
     private val tooFarNotificationDescription = "You are far from the cushion"
@@ -59,6 +58,7 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
     lateinit var myRegion: Region
 
     // Bluetooth properties
+    lateinit var bluetoothManager: BluetoothManager
     lateinit var bluetoothAdapter: BluetoothAdapter
     lateinit var bleScanner: BluetoothLeScanner
     private var mBluetoothLeService: BluetoothLeService? = null
@@ -91,7 +91,7 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
     override fun onResume() {
         super.onResume()
         registerReceiver(mGattUpdateReceiver, makeGattUpdateIntentFilter())
-        if (mConnectionState == STATE_DISCONNECTED) { startScan() }
+        if (mConnectionState == STATE_DISCONNECTED && bluetoothManager.adapter != null) { startScan() }
     }
 
     override fun onDestroy() {
@@ -113,11 +113,9 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
     private val mOnNavigationItemSelectedListener = BottomNavigationView.OnNavigationItemSelectedListener { item ->
         when (item.itemId) {
             R.id.navigation_device -> {
-
                 return@OnNavigationItemSelectedListener true
             }
             R.id.navigation_gps -> {
-
                 return@OnNavigationItemSelectedListener true
             }
         }
@@ -198,16 +196,17 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
     }
 
     private fun setupUART() {
-        val bluetoothManager = getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
-        bluetoothAdapter = bluetoothManager.adapter
-        if (!bluetoothAdapter.isEnabled) {
-            // Bluetooth is not enabled
-            val enableBtIntent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
-            this@DeviceActivity.startActivityForResult(enableBtIntent, ENABLE_BT_REQUEST_CODE)
-            Toast.makeText(applicationContext, "Enabling Bluetooth!", Toast.LENGTH_LONG).show()
-        } else if (mConnectionState != STATE_TEMP_SENSOR_OFF){
-            // Bluetooth is enable
-            startScan()
+        bluetoothManager = getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
+        if (bluetoothManager.adapter != null) {
+            bluetoothAdapter = bluetoothManager.adapter
+            if (!bluetoothAdapter.isEnabled) {
+                // Bluetooth is not enabled
+                val enableBtIntent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
+                this@DeviceActivity.startActivityForResult(enableBtIntent, ENABLE_BT_REQUEST_CODE)
+                Toast.makeText(applicationContext, "Enabling Bluetooth!", Toast.LENGTH_LONG).show()
+            } else if (mConnectionState != STATE_TEMP_SENSOR_OFF) {
+                // Bluetooth is enable
+                startScan()
 //            Handler().postDelayed({
 //                if (mConnectionState == STATE_CONNECTED || mConnectionState == STATE_CONNECTING) {
 //                    // It has to be either connecting or connected
@@ -220,10 +219,13 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
 //                }
 //            }, scannerTimeout)
 
-            Intent(this@DeviceActivity, BluetoothLeService::class.java).also {
-                bindService(it, mServiceConnection, Context.BIND_AUTO_CREATE)
+                Intent(this@DeviceActivity, BluetoothLeService::class.java).also {
+                    bindService(it, mServiceConnection, Context.BIND_AUTO_CREATE)
+                }
+                i(TAG_BLUETOOTH, "UART setup")
             }
-            i(TAG_BLUETOOTH, "UART setup")
+        } else {
+            i(TAG_BLUETOOTH, "Bluetooth is not available on this device")
         }
     }
 
@@ -365,6 +367,7 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
 
     // Initiates Bluetooth pairing process
     private fun startScan() {
+        i(TAG_BLUETOOTH, "starting scan")
         if (bluetoothAdapter.isEnabled && !isScanning) {
             i(TAG_BLUETOOTH, "Scanning...")
             // Set State

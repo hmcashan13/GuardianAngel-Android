@@ -1,9 +1,9 @@
 package com.example.hudsonmcashan.guradianaangel.Settings
 
 import android.os.Bundle
-import android.support.v7.app.AppCompatActivity
 import android.widget.ListView
 import android.content.Intent
+import androidx.appcompat.app.AppCompatActivity
 import com.example.hudsonmcashan.guradianaangel.R
 
 val TAG_SETTINGS = "SettingsActivity"

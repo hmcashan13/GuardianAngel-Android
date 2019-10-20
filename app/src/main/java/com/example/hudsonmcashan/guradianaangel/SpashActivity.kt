@@ -3,8 +3,7 @@ package com.example.hudsonmcashan.guradianaangel
 import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
-import android.support.v7.app.AppCompatActivity
-import com.example.hudsonmcashan.guradianaangel.Settings.SettingsActivity
+import androidx.appcompat.app.AppCompatActivity
 
 class SplashActivity : AppCompatActivity() {
     private val splashTimeout = 500L

@@ -1,7 +1,7 @@
 package com.example.hudsonmcashan.guradianaangel
 
 import android.os.Bundle
-import android.support.v7.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatActivity
 
 class GPSActivity: AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
