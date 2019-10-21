@@ -29,6 +29,10 @@ import com.google.android.material.bottomnavigation.BottomNavigationView
 import kotlinx.android.synthetic.main.fragment_device.*
 import kotlin.math.roundToInt
 
+// Timeouts
+const val scannerTimeout = 10000L
+const val spinnerTimeout = 10000L
+
 // App info
 const val appIdentifier = "com.example.hudsonmcashan.guradianaangel"
 const val appTitle = "Guardian Angel"
@@ -72,9 +76,7 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
     // Preference property
     var prefs: Prefs? = null
 
-    // Timeouts
-    private val scannerTimeout = 10000L
-    private val spinnerTimeout = 10000L
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -185,7 +187,7 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
     private fun setupBeacon() {
         // Setup UI
         //runOnUiThread {
-//            showBeaconSpinner()
+            deviceFragment.showBeaconSpinner()
         //}
         // Initialize Beacon properties
         beaconManager = BeaconManager.getInstanceForApplication(this)
@@ -241,10 +243,10 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
                 i(TAG_BLUETOOTH, "UART setup")
             }
         } else {
-//            temp_label.text = "Not Connected"
-//            weight_label.text = "No"
-            //hideTempSpinner()
-            //hideWeightSpinner()
+            deviceFragment.temp_label.text = "Not Connected"
+            deviceFragment.weight_label.text = "No"
+            deviceFragment.hideTempSpinner()
+            deviceFragment.hideWeightSpinner()
 
             // TODO: have the format of the AlertDialog look nicer
             // Initialize a new instance of
@@ -427,8 +429,8 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
             }, scannerTimeout)
             // Setup UI
             //runOnUiThread{
-                //showTempSpinner()
-                //showWeightSpinner()
+                deviceFragment.showTempSpinner()
+                deviceFragment.showWeightSpinner()
             //}
             bleScanner = bluetoothAdapter.bluetoothLeScanner
             val scanFilter = ScanFilter.Builder().build()
@@ -489,8 +491,8 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
                     // Setup UI
                     //runOnUiThread {
                         setActionBarTitle(mConnectionState)
-                        //hideTempSpinner()
-                        //hideWeightSpinner()
+                        deviceFragment.hideTempSpinner()
+                        deviceFragment.hideWeightSpinner()
                     //}
                 }
                 BluetoothLeService.ACTION_GATT_DISCONNECTED -> {
@@ -503,8 +505,8 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
                     // Setup UI
                     //runOnUiThread {
                         //hideTempSpinner()
-                        //hideWeightSpinner()
-                        //hideBeaconSpinner()
+                        deviceFragment.hideWeightSpinner()
+                        deviceFragment.hideBeaconSpinner()
                     //}
 
                 }
@@ -562,7 +564,7 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
             //runOnUiThread {
                 setActionBarTitle(STATE_TEMP_SENSOR_OFF)
                 temp_progressBar.visibility = View.GONE
-                //temp_label.text = getString(R.string.notConnected)
+                deviceFragment.temp_label.text = getString(R.string.notConnected)
             //}
         }
     }
@@ -591,72 +593,4 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
             return intentFilter
         }
     }
-
-//    private fun showTempSpinner() {
-//        temp_progressBar.visibility = View.VISIBLE
-//        temp_label.visibility = View.GONE
-//        Handler().postDelayed({
-//            temp_progressBar.visibility = View.GONE
-//            temp_label.visibility = View.VISIBLE
-//        }, spinnerTimeout)
-//    }
-//
-//    private fun showBeaconSpinner() {
-//        beacon_progressBar.visibility = View.VISIBLE
-//        beacon_label.visibility = View.GONE
-//        Handler().postDelayed({
-//            beacon_progressBar.visibility = View.GONE
-//            beacon_label.visibility = View.VISIBLE
-//        }, spinnerTimeout)
-//    }
-//
-//    private fun showWeightSpinner() {
-//        weight_progressBar.visibility = View.VISIBLE
-//        weight_label.visibility = View.GONE
-//        Handler().postDelayed({
-//            weight_label.visibility = View.VISIBLE
-//            weight_progressBar.visibility = View.GONE
-//        }, spinnerTimeout)
-//    }
-//
-//    private fun hideTempSpinner() {
-//        temp_progressBar.visibility = View.GONE
-//        temp_label.visibility = View.VISIBLE
-//    }
-//
-//    private fun hideBeaconSpinner() {
-//        beacon_progressBar.visibility = View.GONE
-//        beacon_label.visibility = View.VISIBLE
-//    }
-//
-//    private fun hideWeightSpinner() {
-//        weight_label.visibility = View.VISIBLE
-//        weight_progressBar.visibility = View.GONE
-//    }
-//
-//    // Spinner functions
-//    private fun showSpinners() {
-//        temp_progressBar.visibility = View.VISIBLE
-//        beacon_progressBar.visibility = View.VISIBLE
-//        temp_label.visibility = View.GONE
-//        beacon_label.visibility = View.GONE
-//        Handler().postDelayed({
-//            temp_label.visibility = View.VISIBLE
-//            beacon_label.visibility = View.VISIBLE
-//            weight_label.visibility = View.VISIBLE
-//            temp_progressBar.visibility = View.GONE
-//            beacon_progressBar.visibility = View.GONE
-//            weight_progressBar.visibility = View.GONE
-//        }, spinnerTimeout)
-//    }
-//
-//    private fun hideSpinners() {
-//        temp_label.visibility = View.VISIBLE
-//        beacon_label.visibility = View.VISIBLE
-//        weight_label.visibility = View.VISIBLE
-//        temp_progressBar.visibility = View.GONE
-//        beacon_progressBar.visibility = View.GONE
-//        weight_progressBar.visibility = View.GONE
-//
-//    }
 }
