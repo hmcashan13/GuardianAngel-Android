@@ -12,8 +12,8 @@
 
         <ImageView
             android:id="@+id/connection_logo"
-            android:layout_width="266dp"
-            android:layout_height="163dp"
+            android:layout_width="241dp"
+            android:layout_height="131dp"
             android:layout_marginStart="8dp"
             android:layout_marginLeft="8dp"
             android:layout_marginTop="8dp"

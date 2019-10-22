@@ -27,6 +27,7 @@ import com.example.hudsonmcashan.guradianaangel.Settings.SettingsActivity
 import com.example.hudsonmcashan.guradianaangel.Settings.TAG_SETTINGS
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import kotlinx.android.synthetic.main.fragment_device.*
+import kotlin.concurrent.schedule
 import kotlin.math.roundToInt
 
 // Timeouts
@@ -54,7 +55,6 @@ const val ENABLE_BT_REQUEST_CODE = 1
 @Suppress("DEPRECATION")
 @TargetApi(26)
 class DeviceActivity : AppCompatActivity(), BeaconConsumer {
-
     // Notification properties
     private val tooFarNotificationDescription = "You are far from the cushion"
     private val inRegionNotificationDescription = "Entered region"
@@ -77,7 +77,6 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
     var prefs: Prefs? = null
 
 
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -89,8 +88,9 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
         setupWriteSettings()
         setupInfoButton()
         setupSettingsButton()
-        setupBeacon()
+
         setupUART()
+        setupBeacon()
     }
 
     override fun onResume() {
@@ -187,7 +187,7 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
     private fun setupBeacon() {
         // Setup UI
         //runOnUiThread {
-            deviceFragment.showBeaconSpinner()
+            deviceFragment.subject.onNext("beaconConnecting")
         //}
         // Initialize Beacon properties
         beaconManager = BeaconManager.getInstanceForApplication(this)
@@ -243,11 +243,6 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
                 i(TAG_BLUETOOTH, "UART setup")
             }
         } else {
-            deviceFragment.temp_label.text = "Not Connected"
-            deviceFragment.weight_label.text = "No"
-            deviceFragment.hideTempSpinner()
-            deviceFragment.hideWeightSpinner()
-
             // TODO: have the format of the AlertDialog look nicer
             // Initialize a new instance of
             val builder = AlertDialog.Builder(this@DeviceActivity)
@@ -270,6 +265,12 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
             // Display the alert dialog on app interface
             dialog.show()
             i(TAG_BLUETOOTH, "Bluetooth is not available on this device")
+
+            // Bluetooth is not available on device
+            Timer().schedule(500) {
+                deviceFragment.subject.onNext("notConnected")
+            }
+
         }
     }
 
@@ -391,8 +392,7 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
 
             override fun didExitRegion(region: Region) {
                 i(TAG_BEACON, "Adios")
-                //hideBeaconSpinner()
-                beacon_label.text = getString(R.string.notConnected)
+                deviceFragment.subject.onNext("beaconNotConnected")
             }
 
             override fun didDetermineStateForRegion(state: Int, region: Region) {
@@ -429,8 +429,7 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
             }, scannerTimeout)
             // Setup UI
             //runOnUiThread{
-                deviceFragment.showTempSpinner()
-                deviceFragment.showWeightSpinner()
+                deviceFragment.subject.onNext("connecting")
             //}
             bleScanner = bluetoothAdapter.bluetoothLeScanner
             val scanFilter = ScanFilter.Builder().build()
@@ -505,8 +504,7 @@ class DeviceActivity : AppCompatActivity(), BeaconConsumer {
                     // Setup UI
                     //runOnUiThread {
                         //hideTempSpinner()
-                        deviceFragment.hideWeightSpinner()
-                        deviceFragment.hideBeaconSpinner()
+                        deviceFragment.subject.onNext("notConnected")
                     //}
 
                 }

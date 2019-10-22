@@ -12,6 +12,8 @@
     <string name="connected">Connected</string>
     <string name="tempSensorOff">Temperature Sensor is turned off</string>
     <string name="uartName">NORDIC_USART</string>
+    <string name="Yes">Yes</string>
+    <string name="No">No</string>
 
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
