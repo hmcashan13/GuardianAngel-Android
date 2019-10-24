@@ -9,11 +9,12 @@ android {
     compileSdkVersion 28
     defaultConfig {
         applicationId "com.example.hudsonmcashan.guradianaangel"
-        minSdkVersion 15
+        minSdkVersion 16
         targetSdkVersion 28
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        multiDexEnabled true
     }
     buildTypes {
         release {
@@ -26,22 +27,40 @@ android {
 dependencies {
 
     implementation fileTree(dir: 'libs', include: ['*.jar'])
+    // Handle Multiple Dex Files
+    implementation 'androidx.multidex:multidex:2.0.1'
+    // Kotlin SDK
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
-    implementation 'androidx.appcompat:appcompat:1.0.0'
-    implementation 'androidx.constraintlayout:constraintlayout:1.1.3'
-    implementation 'de.hdodenhof:circleimageview:2.2.0'
     implementation "org.jetbrains.anko:anko-common:0.8.3"
-
+    // Android SDK
+    implementation 'androidx.appcompat:appcompat:1.0.0'
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
+    implementation 'androidx.constraintlayout:constraintlayout:1.1.3'
+
+    implementation 'de.hdodenhof:circleimageview:2.2.0'
+    // Beacon SDK
+    implementation 'org.altbeacon:android-beacon-library:2+'
+    // Rx SDK
+    implementation "io.reactivex.rxjava2:rxkotlin:2.4.0"
+    implementation "io.reactivex.rxjava2:rxandroid:2.0.1"
+
+    // Google Maps SDK
+    implementation 'com.google.android.gms:play-services-location:16.0.0'
+    implementation 'com.google.android.gms:play-services-maps:16.1.0'
+    implementation 'com.google.android.material:material:1.0.0'
+    // Firebase SDK
+    implementation 'com.google.firebase:firebase-core:17.2.0'
+    implementation 'com.google.firebase:firebase-analytics:17.2.0'
+    implementation 'com.google.firebase:firebase-auth:19.1.0'
+    // Testing SDK
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'androidx.test:runner:1.1.0-alpha3'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.1.0-alpha3'
 
-    implementation 'com.google.android.material:material:1.0.0'
-    implementation 'org.altbeacon:android-beacon-library:2+'
 
-    implementation "io.reactivex.rxjava2:rxkotlin:2.4.0"
-    implementation "io.reactivex.rxjava2:rxandroid:2.0.1"
+
+
+
 }
 
 apply plugin: 'com.google.gms.google-services'
